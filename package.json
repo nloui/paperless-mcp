@@ -1,0 +1,20 @@
+{
+  "name": "paperless-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for interacting with Paperless-NGX",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "paperless-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Nick Loui",
+  "license": "ISC",
+  "dependencies": {
+    "litemcp": "^0.7.0",
+    "zod": "^3.24.1"
+  }
+}
