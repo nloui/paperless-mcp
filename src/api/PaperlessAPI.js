@@ -8,8 +8,9 @@ export class PaperlessAPI {
     const url = `${this.baseUrl}/api${path}`
     const headers = {
       Authorization: `Token ${this.token}`,
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
+      Accept: 'application/json; version=5',
+      'Content-Type': 'application/json',
+      'Accept-Language': 'en-US,en;q=0.9'
     }
 
     const response = await fetch(url, {
@@ -21,6 +22,13 @@ export class PaperlessAPI {
     })
 
     if (!response.ok) {
+      console.error({
+        error: 'Error executing request',
+        url,
+        options,
+        status: response.status,
+        response: await response.json()
+      })
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
@@ -119,6 +127,19 @@ export class PaperlessAPI {
     })
   }
 
+  async updateTag(id, data) {
+    return this.request(`/tags/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async deleteTag(id) {
+    return this.request(`/tags/${id}/`, {
+      method: 'DELETE'
+    })
+  }
+
   // Correspondent operations
   async getCorrespondents() {
     return this.request('/correspondents/')
@@ -139,7 +160,21 @@ export class PaperlessAPI {
   async createDocumentType(data) {
     return this.request('/document_types/', {
       method: 'POST',
+      method: 'POST',
       body: JSON.stringify(data)
+    })
+  }
+
+  // Bulk object operations
+  async bulkEditObjects(objects, objectType, operation, parameters = {}) {
+    return this.request('/bulk_edit_objects/', {
+      method: 'POST',
+      body: JSON.stringify({
+        objects,
+        object_type: objectType,
+        operation,
+        ...parameters
+      })
     })
   }
 }
