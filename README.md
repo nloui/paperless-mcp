@@ -1,9 +1,20 @@
 # Paperless-NGX MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@nloui/paperless-mcp)](https://smithery.ai/server/@nloui/paperless-mcp)
+
 An MCP (Model Context Protocol) server for interacting with a Paperless-NGX API server. This server provides tools for managing documents, tags, correspondents, and document types in your Paperless-NGX instance.
 
 ## Quick Start
 
+### Installing via Smithery
+
+To install Paperless NGX MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@nloui/paperless-mcp):
+
+```bash
+npx -y @smithery/cli install @nloui/paperless-mcp --client claude
+```
+
+### Manual Installation
 1. Install the MCP server:
 ```bash
 npm install -g paperless-mcp
