@@ -4,6 +4,10 @@
 
 An MCP (Model Context Protocol) server for interacting with a Paperless-NGX API server. This server provides tools for managing documents, tags, correspondents, and document types in your Paperless-NGX instance.
 
+<a href="https://glama.ai/mcp/servers/ng04du3voj">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/ng04du3voj/badge" alt="Paperless-NGX Server MCP server" />
+</a>
+
 ## Quick Start
 
 ### Installing via Smithery
@@ -154,7 +158,7 @@ Parameters:
   - permissions: Object for set_permissions with owner, permissions, merge flag
   - metadata_document_id: ID for merge to specify metadata source
   - delete_originals: Boolean for merge/split
-  - pages: String for split "[1,2-3,4,5-7]" or delete_pages "[2,3,4]"
+  - pages: String for split "[1,2-3,4,5]" or delete_pages "[2,3,4]"
   - degrees: Number for rotate (90, 180, or 270)
 
 Examples:
