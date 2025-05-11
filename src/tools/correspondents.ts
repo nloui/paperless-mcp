@@ -1,67 +1,61 @@
-import { z } from 'zod'
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { z } from "zod";
 
-export function registerCorrespondentTools(server, api) {
-  server.addTool({
-    name: 'list_correspondents',
-    description: 'List all correspondents',
-    parameters: z.object({}),
-    execute: async () => {
-      if (!api) throw new Error('Please configure API connection first')
-      return api.getCorrespondents()
-    }
-  })
+export function registerCorrespondentTools(server: McpServer, api) {
+  server.tool("list_correspondents", {}, async (args, extra) => {
+    if (!api) throw new Error("Please configure API connection first");
+    return api.getCorrespondents();
+  });
 
-  server.addTool({
-    name: 'create_correspondent',
-    description: 'Create a new correspondent',
-    parameters: z.object({
+  server.tool(
+    "create_correspondent",
+    {
       name: z.string(),
       match: z.string().optional(),
       matching_algorithm: z
-        .enum(['any', 'all', 'exact', 'regular expression', 'fuzzy'])
-        .optional()
-    }),
-    execute: async args => {
-      if (!api) throw new Error('Please configure API connection first')
-      return api.createCorrespondent(args)
+        .enum(["any", "all", "exact", "regular expression", "fuzzy"])
+        .optional(),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.createCorrespondent(args);
     }
-  })
+  );
 
-  server.addTool({
-    name: 'bulk_edit_correspondents',
-    description: 'Bulk edit correspondents (set permissions or delete)',
-    parameters: z.object({
+  server.tool(
+    "bulk_edit_correspondents",
+    {
       correspondent_ids: z.array(z.number()),
-      operation: z.enum(['set_permissions', 'delete']),
+      operation: z.enum(["set_permissions", "delete"]),
       owner: z.number().optional(),
       permissions: z
         .object({
           view: z.object({
             users: z.array(z.number()).optional(),
-            groups: z.array(z.number()).optional()
+            groups: z.array(z.number()).optional(),
           }),
           change: z.object({
             users: z.array(z.number()).optional(),
-            groups: z.array(z.number()).optional()
-          })
+            groups: z.array(z.number()).optional(),
+          }),
         })
         .optional(),
-      merge: z.boolean().optional()
-    }),
-    execute: async args => {
-      if (!api) throw new Error('Please configure API connection first')
+      merge: z.boolean().optional(),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
       return api.bulkEditObjects(
         args.correspondent_ids,
-        'correspondents',
+        "correspondents",
         args.operation,
-        args.operation === 'set_permissions'
+        args.operation === "set_permissions"
           ? {
               owner: args.owner,
               permissions: args.permissions,
-              merge: args.merge
+              merge: args.merge,
             }
           : {}
-      )
+      );
     }
-  })
+  );
 }
