@@ -1,0 +1,13 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# HTTP Transport Mode for MCP Server
+
+- The MCP server can run in HTTP mode using the `--http` CLI flag.
+- When `--http` is set, the entrypoint [src/index.ts](mdc:src/index.ts) starts an Express server and exposes the MCP API at `/mcp`.
+- Each POST to `/mcp` creates a new `McpServer` and `StreamableHTTPServerTransport` for stateless, isolated handling.
+- The HTTP port can be set with `--port` (default: 3000).
+- Express must be installed as a dependency for HTTP mode.
+- If `--http` is not set, the server runs in stdio mode as before.
