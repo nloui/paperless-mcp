@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
@@ -19,42 +20,57 @@ if (portIndex !== -1 && args[portIndex + 1]) {
 }
 
 async function main() {
-  // Parse command line arguments
-  const baseUrl = args[0];
-  const token = args[1];
+  let baseUrl: string | undefined;
+  let token: string | undefined;
 
-  if (!baseUrl || !token) {
-    console.error(
-      "Usage: paperless-mcp <baseUrl> <token> [--http] [--port <port>]"
-    );
-    console.error(
-      "Example: paperless-mcp http://localhost:8000 your-api-token --http --port 3000"
-    );
-    process.exit(1);
+  if (useHttp) {
+    baseUrl = process.env.PAPERLESS_URL;
+    token = process.env.API_KEY;
+    if (!baseUrl || !token) {
+      console.error(
+        "When using --http, PAPERLESS_URL and API_KEY environment variables must be set."
+      );
+      process.exit(1);
+    }
+  } else {
+    baseUrl = args[0];
+    token = args[1];
+    if (!baseUrl || !token) {
+      console.error(
+        "Usage: paperless-mcp <baseUrl> <token> [--http] [--port <port>]"
+      );
+      console.error(
+        "Example: paperless-mcp http://localhost:8000 your-api-token --http --port 3000"
+      );
+      console.error(
+        "When using --http, PAPERLESS_URL and API_KEY environment variables must be set."
+      );
+      process.exit(1);
+    }
   }
+
+  // Initialize API client and server once
+  const api = new PaperlessAPI(baseUrl, token);
+  const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
+  registerDocumentTools(server, api);
+  registerTagTools(server, api);
+  registerCorrespondentTools(server, api);
+  registerDocumentTypeTools(server, api);
 
   if (useHttp) {
     const app = express();
     app.use(express.json());
 
+    // Store transports for each session
+    const sseTransports: Record<string, SSEServerTransport> = {};
+
     app.post("/mcp", async (req, res) => {
       try {
-        // Create new API and server for each request
-        const api = new PaperlessAPI(baseUrl, token);
-        const server = new McpServer({
-          name: "paperless-ngx",
-          version: "1.0.0",
-        });
-        registerDocumentTools(server, api);
-        registerTagTools(server, api);
-        registerCorrespondentTools(server, api);
-        registerDocumentTypeTools(server, api);
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
         });
         res.on("close", () => {
           transport.close();
-          server.close && server.close();
         });
         await server.connect(transport);
         await transport.handleRequest(req, res, req.body);
@@ -99,21 +115,47 @@ async function main() {
       );
     });
 
+    app.get("/sse", async (req, res) => {
+      console.log("SSE request received");
+      try {
+        const transport = new SSEServerTransport("/messages", res);
+        sseTransports[transport.sessionId] = transport;
+        res.on("close", () => {
+          delete sseTransports[transport.sessionId];
+          transport.close();
+        });
+        await server.connect(transport);
+      } catch (error) {
+        console.error("Error handling SSE request:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32603,
+              message: "Internal server error",
+            },
+            id: null,
+          });
+        }
+      }
+    });
+
+    app.post("/messages", async (req, res) => {
+      const sessionId = req.query.sessionId as string;
+      const transport = sseTransports[sessionId];
+      if (transport) {
+        await transport.handlePostMessage(req, res, req.body);
+      } else {
+        res.status(400).send("No transport found for sessionId");
+      }
+    });
+
     app.listen(port, () => {
       console.log(
         `MCP Stateless Streamable HTTP Server listening on port ${port}`
       );
     });
   } else {
-    // Initialize API client
-    const api = new PaperlessAPI(baseUrl, token);
-    // Initialize server
-    const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
-    // Register all tools
-    registerDocumentTools(server, api);
-    registerTagTools(server, api);
-    registerCorrespondentTools(server, api);
-    registerDocumentTypeTools(server, api);
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.log("MCP server running with stdio transport");
