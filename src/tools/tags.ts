@@ -1,10 +1,34 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { z } from "zod";
+import { PaperlessAPI } from "../api/PaperlessAPI";
 
-export function registerTagTools(server, api) {
-  server.tool("list_tags", {}, async (args, extra) => {
-    if (!api) throw new Error("Please configure API connection first");
-    return api.getTags();
-  });
+export function registerTagTools(server: McpServer, api: PaperlessAPI) {
+  server.tool(
+    "list_tags",
+    "List all tags",
+    async (): Promise<CallToolResult> => {
+      if (!api) throw new Error("Please configure API connection first");
+      const tagsResponse = await api.getTags();
+
+      const tags = tagsResponse.results.map(
+        ({ id, slug, name, document_count }) => ({
+          id,
+          slug,
+          name,
+          document_count,
+        })
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(tags),
+          },
+        ],
+      };
+    }
+  );
 
   server.tool(
     "create_tag",

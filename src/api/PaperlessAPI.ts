@@ -1,5 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
+import { GetTagsResponse } from "./types";
 import { headersToObject } from "./utils";
 
 export class PaperlessAPI {
@@ -11,7 +12,7 @@ export class PaperlessAPI {
     this.token = token;
   }
 
-  async request(path: string, options: RequestInit = {}) {
+  async request<T = any>(path: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}/api${path}`;
     const isJson = !options.body || typeof options.body === "string";
 
@@ -24,7 +25,7 @@ export class PaperlessAPI {
     };
 
     try {
-      const response = await axios({
+      const response = await axios<T>({
         url,
         method: options.method || "GET",
         headers: mergedHeaders,
@@ -145,7 +146,7 @@ export class PaperlessAPI {
 
   // Tag operations
   async getTags() {
-    return this.request("/tags/");
+    return this.request<GetTagsResponse>("/tags/");
   }
 
   async createTag(data) {
