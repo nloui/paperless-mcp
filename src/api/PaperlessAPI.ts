@@ -1,3 +1,7 @@
+import axios from "axios";
+import FormData from "form-data";
+import { headersToObject } from "./utils";
+
 export class PaperlessAPI {
   constructor(
     private readonly baseUrl: string,
@@ -9,33 +13,45 @@ export class PaperlessAPI {
 
   async request(path: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}/api${path}`;
-    const headers = {
+    const isJson = !options.body || typeof options.body === "string";
+
+    const mergedHeaders = {
       Authorization: `Token ${this.token}`,
       Accept: "application/json; version=5",
-      "Content-Type": "application/json",
       "Accept-Language": "en-US,en;q=0.9",
+      ...(isJson ? { "Content-Type": "application/json" } : {}),
+      ...headersToObject(options.headers),
     };
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-    });
+    try {
+      const response = await axios({
+        url,
+        method: options.method || "GET",
+        headers: mergedHeaders,
+        data: options.body,
+      });
 
-    if (!response.ok) {
+      const body = response.data;
+      if (response.status < 200 || response.status >= 300) {
+        console.error({
+          error: "Error executing request",
+          url,
+          options,
+          status: response.status,
+          response: body,
+        });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return body;
+    } catch (error) {
       console.error({
         error: "Error executing request",
         url,
         options,
-        status: response.status,
-        response: await response.json(),
       });
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Document operations
@@ -80,22 +96,22 @@ export class PaperlessAPI {
       );
     }
 
-    const response = await fetch(
+    const response = await axios.post(
       `${this.baseUrl}/api/documents/post_document/`,
+      formData,
       {
-        method: "POST",
         headers: {
           Authorization: `Token ${this.token}`,
+          ...formData.getHeaders(),
         },
-        body: formData,
       }
     );
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    return response.data;
   }
 
   async getDocuments(query = "") {
@@ -107,17 +123,21 @@ export class PaperlessAPI {
   }
 
   async searchDocuments(query) {
-    return this.request(`/documents/?query=${encodeURIComponent(query)}`);
+    const response = await this.request(
+      `/documents/?query=${encodeURIComponent(query)}`
+    );
+    return response;
   }
 
   async downloadDocument(id, asOriginal = false) {
     const query = asOriginal ? "?original=true" : "";
-    const response = await fetch(
+    const response = await axios.get(
       `${this.baseUrl}/api/documents/${id}/download/${query}`,
       {
         headers: {
           Authorization: `Token ${this.token}`,
         },
+        responseType: "arraybuffer",
       }
     );
     return response;
