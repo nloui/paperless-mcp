@@ -1,0 +1,18 @@
+---
+description: Ensuring all API and tool response types are defined and reused from a dedicated types file for consistency and maintainability.
+globs: 
+alwaysApply: false
+---
+# Type Usage and Expectations
+
+- All core logic is implemented in TypeScript (.ts files), as described in [README.md](mdc:README.md).
+- Type safety is enforced throughout the codebase, especially for:
+  - API responses (e.g., from PaperlessAPI)
+  - Tool callback signatures (see [src/tools/tags.ts](mdc:src/tools/tags.ts))
+  - Server interactions using `@modelcontextprotocol/sdk` types (e.g., `CallToolResult`)
+- Types for API responses should be defined in a dedicated file (e.g., `src/api/types.ts`), and imported where needed for clarity and maintainability.
+- When defining tools, always use the correct callback signature and return types as required by the SDK.
+- Prefer explicit type annotations for function arguments and return values, especially for exported functions and tool handlers.
+- Use Zod schemas for runtime validation of tool arguments where applicable.
+
+This ensures robust type checking and predictable behavior across the MCP server implementation.

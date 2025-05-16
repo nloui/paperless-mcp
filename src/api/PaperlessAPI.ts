@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { GetTagsResponse } from "./types";
+import { GetTagsResponse, SearchDocumentsResponse } from "./types";
 import { headersToObject } from "./utils";
 
 export class PaperlessAPI {
@@ -69,7 +69,7 @@ export class PaperlessAPI {
 
   async postDocument(
     file: File,
-    metadata: Record<string, string | string[]> = {}
+    metadata: Record<string, string | string[] | number | number[]> = {}
   ) {
     const formData = new FormData();
     formData.append("document", file);
@@ -123,8 +123,8 @@ export class PaperlessAPI {
     return this.request(`/documents/${id}/`);
   }
 
-  async searchDocuments(query) {
-    const response = await this.request(
+  async searchDocuments(query: string): Promise<SearchDocumentsResponse> {
+    const response = await this.request<SearchDocumentsResponse>(
       `/documents/?query=${encodeURIComponent(query)}`
     );
     return response;

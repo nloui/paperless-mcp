@@ -20,3 +20,44 @@ export interface GetTagsResponse {
   all: number[];
   results: Tag[];
 }
+
+export interface SearchDocumentsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  all: number[];
+  results: SearchDocument[];
+}
+
+export interface SearchDocument {
+  id: number;
+  correspondent: number | null;
+  document_type: number | null;
+  storage_path: string | null;
+  title: string;
+  content: string | null;
+  tags: number[];
+  created: string;
+  created_date: string;
+  modified: string;
+  added: string;
+  deleted_at: string | null;
+  archive_serial_number: string | null;
+  original_file_name: string;
+  archived_file_name: string;
+  owner: number | null;
+  user_can_change: boolean;
+  is_shared_by_requester: boolean;
+  notes: any[];
+  custom_fields: any[];
+  page_count: number;
+  mime_type: string;
+  __search_hit__: SearchHit;
+}
+
+export interface SearchHit {
+  score: number;
+  highlights: string;
+  note_highlights: string;
+  rank: number;
+}

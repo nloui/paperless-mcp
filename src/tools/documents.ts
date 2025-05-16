@@ -1,6 +1,8 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
+import { PaperlessAPI } from "../api/PaperlessAPI";
 
-export function registerDocumentTools(server, api) {
+export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
   server.tool(
     "bulk_edit_documents",
     {
@@ -89,8 +91,8 @@ export function registerDocumentTools(server, api) {
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const query = new URLSearchParams();
-      if (args.page) query.set("page", args.page);
-      if (args.page_size) query.set("page_size", args.page_size);
+      if (args.page) query.set("page", args.page.toString());
+      if (args.page_size) query.set("page_size", args.page_size.toString());
       return api.getDocuments(query.toString() ? `?${query.toString()}` : "");
     }
   );
@@ -108,12 +110,64 @@ export function registerDocumentTools(server, api) {
 
   server.tool(
     "search_documents",
+    "Search for documents",
     {
       query: z.string(),
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.searchDocuments(args.query);
+      const docsResponse = await api.searchDocuments(args.query);
+      let docs = docsResponse.results.map(
+        ({
+          id,
+          title,
+          correspondent,
+          document_type,
+          created,
+          created_date,
+          tags,
+        }) => ({
+          id,
+          title,
+          correspondent,
+          document_type,
+          created,
+          created_date,
+          tags,
+        })
+      );
+      if (!docs?.length) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No documents found",
+            },
+          ],
+        };
+      }
+
+      const tagsResponse = await api.getTags();
+      const tagMap = new Map(
+        tagsResponse.results.map((tag) => [tag.id, tag.name])
+      );
+      const docsWithTags = docs.map((doc) => ({
+        ...doc,
+        tags: Array.isArray(doc.tags)
+          ? doc.tags.map((tagId) => ({
+              id: tagId,
+              name: tagMap.get(tagId) || String(tagId),
+            }))
+          : doc.tags,
+      }));
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(docsWithTags),
+          },
+        ],
+      };
     }
   );
 
@@ -126,13 +180,24 @@ export function registerDocumentTools(server, api) {
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.downloadDocument(args.id, args.original);
+      const filename =
+        (typeof response.headers.get === "function"
+          ? response.headers.get("content-disposition")
+          : response.headers["content-disposition"]
+        )
+          ?.split("filename=")[1]
+          ?.replace(/"/g, "") || `document-${args.id}`;
       return {
-        blob: Buffer.from(await response.arrayBuffer()).toString("base64"),
-        filename:
-          response.headers
-            .get("content-disposition")
-            ?.split("filename=")[1]
-            ?.replace(/"/g, "") || `document-${args.id}`,
+        content: [
+          {
+            type: "resource",
+            resource: {
+              uri: filename,
+              blob: Buffer.from(response.data).toString("base64"),
+              mimeType: "application/pdf",
+            },
+          },
+        ],
       };
     }
   );
