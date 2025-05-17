@@ -7,6 +7,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
   server.tool(
     "list_tags",
     "List all tags",
+    {},
     async (): Promise<CallToolResult> => {
       if (!api) throw new Error("Please configure API connection first");
       const tagsResponse = await api.getTags();

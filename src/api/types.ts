@@ -13,23 +13,19 @@ export interface Tag {
   user_can_change: boolean;
 }
 
-export interface GetTagsResponse {
+export interface PaginationResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
   all: number[];
-  results: Tag[];
+  results: T[];
 }
 
-export interface SearchDocumentsResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  all: number[];
-  results: SearchDocument[];
-}
+export interface GetTagsResponse extends PaginationResponse<Tag> {}
 
-export interface SearchDocument {
+export interface DocumentsResponse extends PaginationResponse<Document> {}
+
+export interface Document {
   id: number;
   correspondent: number | null;
   document_type: number | null;
@@ -52,7 +48,7 @@ export interface SearchDocument {
   custom_fields: any[];
   page_count: number;
   mime_type: string;
-  __search_hit__: SearchHit;
+  __search_hit__?: SearchHit;
 }
 
 export interface SearchHit {

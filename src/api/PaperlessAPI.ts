@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { GetTagsResponse, SearchDocumentsResponse } from "./types";
+import { DocumentsResponse, GetTagsResponse } from "./types";
 import { headersToObject } from "./utils";
 
 export class PaperlessAPI {
@@ -115,16 +115,16 @@ export class PaperlessAPI {
     return response.data;
   }
 
-  async getDocuments(query = "") {
-    return this.request(`/documents/${query}`);
+  async getDocuments(query = ""): Promise<DocumentsResponse> {
+    return this.request<DocumentsResponse>(`/documents/${query}`);
   }
 
   async getDocument(id) {
     return this.request(`/documents/${id}/`);
   }
 
-  async searchDocuments(query: string): Promise<SearchDocumentsResponse> {
-    const response = await this.request<SearchDocumentsResponse>(
+  async searchDocuments(query: string): Promise<DocumentsResponse> {
+    const response = await this.request<DocumentsResponse>(
       `/documents/?query=${encodeURIComponent(query)}`
     );
     return response;
