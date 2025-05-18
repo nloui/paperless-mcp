@@ -1,10 +1,48 @@
 import { z } from "zod";
+import { errorMiddleware } from "./utils/middlewares";
+import { buildQueryString } from "./utils/queryString";
 
 export function registerDocumentTypeTools(server, api) {
-  server.tool("list_document_types", {}, async (args, extra) => {
-    if (!api) throw new Error("Please configure API connection first");
-    return api.getDocumentTypes();
-  });
+  server.tool(
+    "list_document_types",
+    "List all document types. IMPORTANT: When a user query may refer to a document type or tag, you should fetch all document types and all tags up front (with a large enough page_size), cache them for the session, and search locally for matches by name or slug before making further API calls. This reduces redundant requests and handles ambiguity between tags and document types efficiently.",
+    {
+      page: z.number().optional(),
+      page_size: z.number().optional(),
+      name__icontains: z.string().optional(),
+      name__iendswith: z.string().optional(),
+      name__iexact: z.string().optional(),
+      name__istartswith: z.string().optional(),
+      ordering: z.string().optional(),
+    },
+    errorMiddleware(async (args: any = {}, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const queryString = buildQueryString(args);
+      const response = await api.request(
+        `/document_types/${queryString ? `?${queryString}` : ""}`
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response),
+          },
+        ],
+      };
+    })
+  );
+
+  server.tool(
+    "get_document_type",
+    { id: z.number() },
+    errorMiddleware(async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const response = await api.request(`/document_types/${args.id}/`);
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    })
+  );
 
   server.tool(
     "create_document_type",
@@ -15,10 +53,49 @@ export function registerDocumentTypeTools(server, api) {
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createDocumentType(args);
-    }
+      const response = await api.createDocumentType(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    })
+  );
+
+  server.tool(
+    "update_document_type",
+    {
+      id: z.number(),
+      name: z.string(),
+      match: z.string().optional(),
+      matching_algorithm: z
+        .enum(["any", "all", "exact", "regular expression", "fuzzy"])
+        .optional(),
+    },
+    errorMiddleware(async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const response = await api.request(`/document_types/${args.id}/`, {
+        method: "PUT",
+        body: JSON.stringify(args),
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    })
+  );
+
+  server.tool(
+    "delete_document_type",
+    { id: z.number() },
+    errorMiddleware(async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      await api.request(`/document_types/${args.id}/`, { method: "DELETE" });
+      return {
+        content: [
+          { type: "text", text: JSON.stringify({ status: "deleted" }) },
+        ],
+      };
+    })
   );
 
   server.tool(
@@ -41,7 +118,7 @@ export function registerDocumentTypeTools(server, api) {
         .optional(),
       merge: z.boolean().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.bulkEditObjects(
         args.document_type_ids,
@@ -55,6 +132,6 @@ export function registerDocumentTypeTools(server, api) {
             }
           : {}
       );
-    }
+    })
   );
 }
