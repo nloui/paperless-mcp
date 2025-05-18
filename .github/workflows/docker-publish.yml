@@ -1,9 +1,10 @@
 name: Docker Publish
 on:
-  push:
-    branches:
-      - master
-      - main
+  workflow_call:
+    inputs:
+      versionTag:
+        required: false
+        type: string
   pull_request:
     branches:
       - master
@@ -25,6 +26,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set semver and latest tags if release
+        id: tagmeta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+            echo "SEMVER=type=semver,pattern=${{ inputs.versionTag }}" >> $GITHUB_OUTPUT
+            echo "LATEST=type=raw,value=latest" >> $GITHUB_OUTPUT
+          else
+            echo "SEMVER=" >> $GITHUB_OUTPUT
+            echo "LATEST=" >> $GITHUB_OUTPUT
+          fi
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -34,6 +45,8 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=sha
+            ${{ steps.tagmeta.outputs.SEMVER }}
+            ${{ steps.tagmeta.outputs.LATEST }}
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
