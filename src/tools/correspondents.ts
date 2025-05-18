@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
-import { buildQueryString } from "./queryString";
+import { errorMiddleware } from "./utils/middlewares";
+import { buildQueryString } from "./utils/queryString";
 
 export function registerCorrespondentTools(server: McpServer, api) {
   server.tool(
@@ -14,7 +15,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
       name__istartswith: z.string().optional(),
       ordering: z.string().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const queryString = buildQueryString(args);
       const response = await api.request(
@@ -28,16 +29,20 @@ export function registerCorrespondentTools(server: McpServer, api) {
           },
         ],
       };
-    }
+    })
   );
 
-  server.tool("get_correspondent", { id: z.number() }, async (args, extra) => {
-    if (!api) throw new Error("Please configure API connection first");
-    const response = await api.request(`/correspondents/${args.id}/`);
-    return {
-      content: [{ type: "text", text: JSON.stringify(response) }],
-    };
-  });
+  server.tool(
+    "get_correspondent",
+    { id: z.number() },
+    errorMiddleware(async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const response = await api.request(`/correspondents/${args.id}/`);
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    })
+  );
 
   server.tool(
     "create_correspondent",
@@ -48,13 +53,13 @@ export function registerCorrespondentTools(server: McpServer, api) {
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.createCorrespondent(args);
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
-    }
+    })
   );
 
   server.tool(
@@ -67,7 +72,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.request(`/correspondents/${args.id}/`, {
         method: "PUT",
@@ -76,13 +81,13 @@ export function registerCorrespondentTools(server: McpServer, api) {
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
-    }
+    })
   );
 
   server.tool(
     "delete_correspondent",
     { id: z.number() },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       await api.request(`/correspondents/${args.id}/`, { method: "DELETE" });
       return {
@@ -90,7 +95,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
           { type: "text", text: JSON.stringify({ status: "deleted" }) },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -113,7 +118,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
         .optional(),
       merge: z.boolean().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.bulkEditObjects(
         args.correspondent_ids,
@@ -127,6 +132,6 @@ export function registerCorrespondentTools(server: McpServer, api) {
             }
           : {}
       );
-    }
+    })
   );
 }

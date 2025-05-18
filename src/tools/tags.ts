@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { z } from "zod";
 import { PaperlessAPI } from "../api/PaperlessAPI";
-import { buildQueryString } from "./queryString";
+import { errorMiddleware } from "./utils/middlewares";
+import { buildQueryString } from "./utils/queryString";
 
 export function registerTagTools(server: McpServer, api: PaperlessAPI) {
   server.tool(
@@ -17,7 +17,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
       name__istartswith: z.string().optional(),
       ordering: z.string().optional(),
     },
-    async (args = {}): Promise<CallToolResult> => {
+    errorMiddleware(async (args = {}) => {
       if (!api) throw new Error("Please configure API connection first");
       const queryString = buildQueryString(args);
       const tagsResponse = await api.request(
@@ -31,7 +31,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
           },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -45,7 +45,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
       match: z.string().optional(),
       matching_algorithm: z.number().int().min(0).max(4).optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const tag = await api.createTag(args);
       return {
@@ -56,7 +56,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
           },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -71,7 +71,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
       match: z.string().optional(),
       matching_algorithm: z.number().int().min(0).max(4).optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const tag = await api.updateTag(args.id, args);
       return {
@@ -82,7 +82,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
           },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -90,7 +90,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
     {
       id: z.number(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       await api.deleteTag(args.id);
       return {
@@ -101,7 +101,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
           },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -124,7 +124,7 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
         .optional(),
       merge: z.boolean().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.bulkEditObjects(
         args.tag_ids,
@@ -138,6 +138,6 @@ export function registerTagTools(server: McpServer, api: PaperlessAPI) {
             }
           : {}
       );
-    }
+    })
   );
 }

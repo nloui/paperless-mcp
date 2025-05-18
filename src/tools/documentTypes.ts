@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { buildQueryString } from "./queryString";
+import { errorMiddleware } from "./utils/middlewares";
+import { buildQueryString } from "./utils/queryString";
 
 export function registerDocumentTypeTools(server, api) {
   server.tool(
@@ -13,7 +14,7 @@ export function registerDocumentTypeTools(server, api) {
       name__istartswith: z.string().optional(),
       ordering: z.string().optional(),
     },
-    async (args: any = {}, extra) => {
+    errorMiddleware(async (args: any = {}, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const queryString = buildQueryString(args);
       const response = await api.request(
@@ -27,16 +28,20 @@ export function registerDocumentTypeTools(server, api) {
           },
         ],
       };
-    }
+    })
   );
 
-  server.tool("get_document_type", { id: z.number() }, async (args, extra) => {
-    if (!api) throw new Error("Please configure API connection first");
-    const response = await api.request(`/document_types/${args.id}/`);
-    return {
-      content: [{ type: "text", text: JSON.stringify(response) }],
-    };
-  });
+  server.tool(
+    "get_document_type",
+    { id: z.number() },
+    errorMiddleware(async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const response = await api.request(`/document_types/${args.id}/`);
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    })
+  );
 
   server.tool(
     "create_document_type",
@@ -47,13 +52,13 @@ export function registerDocumentTypeTools(server, api) {
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.createDocumentType(args);
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
-    }
+    })
   );
 
   server.tool(
@@ -66,7 +71,7 @@ export function registerDocumentTypeTools(server, api) {
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.request(`/document_types/${args.id}/`, {
         method: "PUT",
@@ -75,13 +80,13 @@ export function registerDocumentTypeTools(server, api) {
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
-    }
+    })
   );
 
   server.tool(
     "delete_document_type",
     { id: z.number() },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       await api.request(`/document_types/${args.id}/`, { method: "DELETE" });
       return {
@@ -89,7 +94,7 @@ export function registerDocumentTypeTools(server, api) {
           { type: "text", text: JSON.stringify({ status: "deleted" }) },
         ],
       };
-    }
+    })
   );
 
   server.tool(
@@ -112,7 +117,7 @@ export function registerDocumentTypeTools(server, api) {
         .optional(),
       merge: z.boolean().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.bulkEditObjects(
         args.document_type_ids,
@@ -126,6 +131,6 @@ export function registerDocumentTypeTools(server, api) {
             }
           : {}
       );
-    }
+    })
   );
 }
