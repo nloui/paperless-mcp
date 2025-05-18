@@ -357,3 +357,7 @@ npm run start -- <baseUrl> <token> --http --port 3000
 - The MCP API will be available at `POST /mcp` on the specified port.
 - Each request is handled statelessly, following the [StreamableHTTPServerTransport](https://github.com/modelcontextprotocol/typescript-sdk) pattern.
 - GET and DELETE requests to `/mcp` will return 405 Method Not Allowed.
+
+# Credits
+
+This project is a fork of [nloui/paperless-mcp](https://github.com/nloui/paperless-mcp). Many thanks to the original author for their work. Contributions and improvements may be returned upstream.

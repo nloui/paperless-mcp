@@ -1,5 +1,5 @@
 {
-  "name": "@nloui/paperless-mcp",
+  "name": "@baruchiro/paperless-mcp",
   "version": "1.0.0",
   "description": "Model Context Protocol (MCP) server for interacting with Paperless-NGX document management system. Enables AI assistants to manage documents, tags, correspondents, and document types through the Paperless-NGX API.",
   "main": "src/index.js",
@@ -21,11 +21,15 @@
     "model-context-protocol",
     "paperless"
   ],
-  "author": "Nick Loui",
+  "author": "Baruch Odem",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nloui/paperless-mcp.git"
+    "url": "https://github.com/baruchiro/paperless-mcp"
+  },
+  "homepage": "https://github.com/baruchiro/paperless-mcp",
+  "bugs": {
+    "url": "https://github.com/baruchiro/paperless-mcp/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.1",
