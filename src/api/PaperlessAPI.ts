@@ -58,6 +58,7 @@ export class PaperlessAPI {
     } catch (error) {
       console.error({
         error: "Error executing request",
+        message: error instanceof Error ? error.message : String(error),
         url,
         options,
       });
