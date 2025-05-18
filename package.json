@@ -40,6 +40,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.4",
     "@types/node": "^22.15.17",
     "ts-node": "^10.9.2"
   }
