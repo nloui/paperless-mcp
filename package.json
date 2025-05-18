@@ -1,16 +1,17 @@
 {
   "name": "@baruchiro/paperless-mcp",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Model Context Protocol (MCP) server for interacting with Paperless-NGX document management system. Enables AI assistants to manage documents, tags, correspondents, and document types through the Paperless-NGX API.",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "bin": {
-    "paperless-mcp": "src/index.js"
+    "paperless-mcp": "build/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/index.ts",
     "build": "tsc",
-    "inspect": "npm run build && npx -y @modelcontextprotocol/inspector node build/index.js"
+    "inspect": "npm run build && npx -y @modelcontextprotocol/inspector node build/index.js",
+    "prepare": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -28,6 +29,11 @@
     "url": "https://github.com/baruchiro/paperless-mcp"
   },
   "homepage": "https://github.com/baruchiro/paperless-mcp",
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
   "bugs": {
     "url": "https://github.com/baruchiro/paperless-mcp/issues"
   },
