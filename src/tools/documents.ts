@@ -3,6 +3,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { z } from "zod";
 import { PaperlessAPI } from "../api/PaperlessAPI";
 import { DocumentsResponse } from "../api/types";
+import { errorMiddleware } from "./utils/middlewares";
 
 export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
   server.tool(
@@ -53,11 +54,23 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
       pages: z.string().optional(),
       degrees: z.number().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const { documents, method, ...parameters } = args;
-      return api.bulkEditDocuments(documents, method, parameters);
-    }
+      const response = await api.bulkEditDocuments(
+        documents,
+        method,
+        parameters
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ result: response.result || response }),
+          },
+        ],
+      };
+    })
   );
 
   server.tool(
@@ -74,14 +87,28 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
       archive_serial_number: z.string().optional(),
       custom_fields: z.array(z.number()).optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const binaryData = Buffer.from(args.file, "base64");
       const blob = new Blob([binaryData]);
       const file = new File([blob], args.filename);
       const { file: _, filename: __, ...metadata } = args;
-      return api.postDocument(file, metadata);
-    }
+      const response = await api.postDocument(file, metadata);
+      let result;
+      if (typeof response === "string" && /^\d+$/.test(response)) {
+        result = { id: Number(response) };
+      } else {
+        result = { status: response };
+      }
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    })
   );
 
   server.tool(
@@ -99,7 +126,7 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
       created__lte: z.string().optional(),
       ordering: z.string().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const query = new URLSearchParams();
       if (args.page) query.set("page", args.page.toString());
@@ -119,8 +146,8 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
       const docsResponse = await api.getDocuments(
         query.toString() ? `?${query.toString()}` : ""
       );
-      return convertDocsWithTags(docsResponse, api);
-    }
+      return convertDocsWithNames(docsResponse, api);
+    })
   );
 
   server.tool(
@@ -128,10 +155,57 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
     {
       id: z.number(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.getDocument(args.id);
-    }
+      const doc = await api.getDocument(args.id);
+      const [correspondents, documentTypes, tags] = await Promise.all([
+        api.getCorrespondents(),
+        api.getDocumentTypes(),
+        api.getTags(),
+      ]);
+      const correspondentMap = new Map(
+        (correspondents.results || []).map((c) => [c.id, c.name])
+      );
+      const documentTypeMap = new Map(
+        (documentTypes.results || []).map((dt) => [dt.id, dt.name])
+      );
+      const tagMap = new Map(
+        (tags.results || []).map((tag) => [tag.id, tag.name])
+      );
+      const docWithNames = {
+        ...doc,
+        correspondent: doc.correspondent
+          ? {
+              id: doc.correspondent,
+              name:
+                correspondentMap.get(doc.correspondent) ||
+                String(doc.correspondent),
+            }
+          : null,
+        document_type: doc.document_type
+          ? {
+              id: doc.document_type,
+              name:
+                documentTypeMap.get(doc.document_type) ||
+                String(doc.document_type),
+            }
+          : null,
+        tags: Array.isArray(doc.tags)
+          ? doc.tags.map((tagId) => ({
+              id: tagId,
+              name: tagMap.get(tagId) || String(tagId),
+            }))
+          : doc.tags,
+      };
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(docWithNames),
+          },
+        ],
+      };
+    })
   );
 
   server.tool(
@@ -140,11 +214,11 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
     {
       query: z.string(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const docsResponse = await api.searchDocuments(args.query);
-      return convertDocsWithTags(docsResponse, api);
-    }
+      return convertDocsWithNames(docsResponse, api);
+    })
   );
 
   server.tool(
@@ -153,7 +227,7 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
       id: z.number(),
       original: z.boolean().optional(),
     },
-    async (args, extra) => {
+    errorMiddleware(async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.downloadDocument(args.id, args.original);
       const filename =
@@ -175,34 +249,15 @@ export function registerDocumentTools(server: McpServer, api: PaperlessAPI) {
           },
         ],
       };
-    }
+    })
   );
 }
 
-async function convertDocsWithTags(
+async function convertDocsWithNames(
   docsResponse: DocumentsResponse,
   api: PaperlessAPI
 ): Promise<CallToolResult> {
-  const docs = docsResponse.results.map(
-    ({
-      id,
-      title,
-      correspondent,
-      document_type,
-      created,
-      created_date,
-      tags,
-    }) => ({
-      id,
-      title,
-      correspondent,
-      document_type,
-      created,
-      created_date,
-      tags,
-    })
-  );
-  if (!docs?.length) {
+  if (!docsResponse.results?.length) {
     return {
       content: [
         {
@@ -212,11 +267,37 @@ async function convertDocsWithTags(
       ],
     };
   }
+  // Fetch all related entities for name mapping
+  const [correspondents, documentTypes, tags] = await Promise.all([
+    api.getCorrespondents(),
+    api.getDocumentTypes(),
+    api.getTags(),
+  ]);
+  const correspondentMap = new Map(
+    (correspondents.results || []).map((c) => [c.id, c.name])
+  );
+  const documentTypeMap = new Map(
+    (documentTypes.results || []).map((dt) => [dt.id, dt.name])
+  );
+  const tagMap = new Map((tags.results || []).map((tag) => [tag.id, tag.name]));
 
-  const tagsResponse = await api.getTags();
-  const tagMap = new Map(tagsResponse.results.map((tag) => [tag.id, tag.name]));
-  const docsWithTags = docs.map((doc) => ({
+  const docsWithNames = docsResponse.results.map((doc) => ({
     ...doc,
+    correspondent: doc.correspondent
+      ? {
+          id: doc.correspondent,
+          name:
+            correspondentMap.get(doc.correspondent) ||
+            String(doc.correspondent),
+        }
+      : null,
+    document_type: doc.document_type
+      ? {
+          id: doc.document_type,
+          name:
+            documentTypeMap.get(doc.document_type) || String(doc.document_type),
+        }
+      : null,
     tags: Array.isArray(doc.tags)
       ? doc.tags.map((tagId) => ({
           id: tagId,
@@ -228,7 +309,7 @@ async function convertDocsWithTags(
     content: [
       {
         type: "text",
-        text: JSON.stringify(docsWithTags),
+        text: JSON.stringify(docsWithNames),
       },
     ],
   };
