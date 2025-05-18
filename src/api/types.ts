@@ -57,3 +57,41 @@ export interface SearchHit {
   note_highlights: string;
   rank: number;
 }
+
+export interface Correspondent {
+  id: number;
+  slug: string;
+  name: string;
+  match: string;
+  matching_algorithm: number;
+  is_insensitive: boolean;
+  document_count: number;
+  last_correspondence: string;
+  owner: number | null;
+  permissions: any;
+  user_can_change: boolean;
+}
+
+export interface GetCorrespondentsResponse
+  extends PaginationResponse<Correspondent> {}
+
+export interface DocumentType {
+  id: number;
+  slug: string;
+  name: string;
+  match: string;
+  matching_algorithm: number;
+  is_insensitive: boolean;
+  document_count: number;
+  last_correspondence: string;
+  owner: number | null;
+  permissions: any;
+  user_can_change: boolean;
+}
+
+export interface GetDocumentTypesResponse
+  extends PaginationResponse<DocumentType> {}
+
+export interface BulkEditDocumentsResult {
+  result: string;
+}

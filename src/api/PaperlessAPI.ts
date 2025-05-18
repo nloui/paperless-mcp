@@ -1,6 +1,16 @@
 import axios from "axios";
 import FormData from "form-data";
-import { DocumentsResponse, GetTagsResponse } from "./types";
+import {
+  BulkEditDocumentsResult,
+  Correspondent,
+  Document,
+  DocumentsResponse,
+  DocumentType,
+  GetCorrespondentsResponse,
+  GetDocumentTypesResponse,
+  GetTagsResponse,
+  Tag,
+} from "./types";
 import { headersToObject } from "./utils";
 
 export class PaperlessAPI {
@@ -56,8 +66,12 @@ export class PaperlessAPI {
   }
 
   // Document operations
-  async bulkEditDocuments(documents, method, parameters = {}) {
-    return this.request("/documents/bulk_edit/", {
+  async bulkEditDocuments(
+    documents: number[],
+    method: string,
+    parameters = {}
+  ): Promise<BulkEditDocumentsResult> {
+    return this.request<BulkEditDocumentsResult>("/documents/bulk_edit/", {
       method: "POST",
       body: JSON.stringify({
         documents,
@@ -70,7 +84,7 @@ export class PaperlessAPI {
   async postDocument(
     file: File,
     metadata: Record<string, string | string[] | number | number[]> = {}
-  ) {
+  ): Promise<string> {
     const formData = new FormData();
     formData.append("document", file);
 
@@ -97,7 +111,7 @@ export class PaperlessAPI {
       );
     }
 
-    const response = await axios.post(
+    const response = await axios.post<string>(
       `${this.baseUrl}/api/documents/post_document/`,
       formData,
       {
@@ -119,8 +133,8 @@ export class PaperlessAPI {
     return this.request<DocumentsResponse>(`/documents/${query}`);
   }
 
-  async getDocument(id) {
-    return this.request(`/documents/${id}/`);
+  async getDocument(id: number): Promise<Document> {
+    return this.request<Document>(`/documents/${id}/`);
   }
 
   async searchDocuments(query: string): Promise<DocumentsResponse> {
@@ -130,7 +144,7 @@ export class PaperlessAPI {
     return response;
   }
 
-  async downloadDocument(id, asOriginal = false) {
+  async downloadDocument(id: number, asOriginal = false) {
     const query = asOriginal ? "?original=true" : "";
     const response = await axios.get(
       `${this.baseUrl}/api/documents/${id}/download/${query}`,
@@ -145,51 +159,85 @@ export class PaperlessAPI {
   }
 
   // Tag operations
-  async getTags() {
+  async getTags(): Promise<GetTagsResponse> {
     return this.request<GetTagsResponse>("/tags/");
   }
 
-  async createTag(data) {
-    return this.request("/tags/", {
+  async createTag(data: Partial<Tag>): Promise<Tag> {
+    return this.request<Tag>("/tags/", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateTag(id, data) {
-    return this.request(`/tags/${id}/`, {
+  async updateTag(id: number, data: Partial<Tag>): Promise<Tag> {
+    return this.request<Tag>(`/tags/${id}/`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
-  async deleteTag(id) {
-    return this.request(`/tags/${id}/`, {
+  async deleteTag(id: number): Promise<void> {
+    return this.request<void>(`/tags/${id}/`, {
       method: "DELETE",
     });
   }
 
   // Correspondent operations
-  async getCorrespondents() {
-    return this.request("/correspondents/");
+  async getCorrespondents(): Promise<GetCorrespondentsResponse> {
+    return this.request<GetCorrespondentsResponse>("/correspondents/");
   }
 
-  async createCorrespondent(data) {
-    return this.request("/correspondents/", {
+  async createCorrespondent(
+    data: Partial<Correspondent>
+  ): Promise<Correspondent> {
+    return this.request<Correspondent>("/correspondents/", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  // Document type operations
-  async getDocumentTypes() {
-    return this.request("/document_types/");
+  async updateCorrespondent(
+    id: number,
+    data: Partial<Correspondent>
+  ): Promise<Correspondent> {
+    return this.request<Correspondent>(`/correspondents/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
   }
 
-  async createDocumentType(data) {
-    return this.request("/document_types/", {
+  async deleteCorrespondent(id: number): Promise<void> {
+    return this.request<void>(`/correspondents/${id}/`, {
+      method: "DELETE",
+    });
+  }
+
+  // Document type operations
+  async getDocumentTypes(): Promise<GetDocumentTypesResponse> {
+    return this.request<GetDocumentTypesResponse>("/document_types/");
+  }
+
+  async createDocumentType(data: Partial<DocumentType>): Promise<DocumentType> {
+    return this.request<DocumentType>("/document_types/", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  }
+
+  async updateDocumentType(
+    id: number,
+    data: Partial<DocumentType>
+  ): Promise<DocumentType> {
+    return this.request<DocumentType>(`/document_types/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDocumentType(id: number): Promise<void> {
+    return this.request<void>(`/document_types/${id}/`, {
+      method: "DELETE",
     });
   }
 

@@ -1,9 +1,41 @@
 import { z } from "zod";
+import { buildQueryString } from "./queryString";
 
 export function registerDocumentTypeTools(server, api) {
-  server.tool("list_document_types", {}, async (args, extra) => {
+  server.tool(
+    "list_document_types",
+    {
+      page: z.number().optional(),
+      page_size: z.number().optional(),
+      name__icontains: z.string().optional(),
+      name__iendswith: z.string().optional(),
+      name__iexact: z.string().optional(),
+      name__istartswith: z.string().optional(),
+      ordering: z.string().optional(),
+    },
+    async (args: any = {}, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const queryString = buildQueryString(args);
+      const response = await api.request(
+        `/document_types/${queryString ? `?${queryString}` : ""}`
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool("get_document_type", { id: z.number() }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getDocumentTypes();
+    const response = await api.request(`/document_types/${args.id}/`);
+    return {
+      content: [{ type: "text", text: JSON.stringify(response) }],
+    };
   });
 
   server.tool(
@@ -17,7 +49,46 @@ export function registerDocumentTypeTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createDocumentType(args);
+      const response = await api.createDocumentType(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    }
+  );
+
+  server.tool(
+    "update_document_type",
+    {
+      id: z.number(),
+      name: z.string(),
+      match: z.string().optional(),
+      matching_algorithm: z
+        .enum(["any", "all", "exact", "regular expression", "fuzzy"])
+        .optional(),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const response = await api.request(`/document_types/${args.id}/`, {
+        method: "PUT",
+        body: JSON.stringify(args),
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify(response) }],
+      };
+    }
+  );
+
+  server.tool(
+    "delete_document_type",
+    { id: z.number() },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      await api.request(`/document_types/${args.id}/`, { method: "DELETE" });
+      return {
+        content: [
+          { type: "text", text: JSON.stringify({ status: "deleted" }) },
+        ],
+      };
     }
   );
 
