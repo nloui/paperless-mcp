@@ -1,0 +1,24 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({command: 'node', args: ['index.js', config.baseUrl, config.token]})
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - baseUrl
+      - token
+    properties:
+      baseUrl:
+        type: string
+        description: URL of the Paperless-NGX API endpoints
+      token:
+        type: string
+        description: API token for authenticating with Paperless-NGX
+  exampleConfig:
+    baseUrl: http://localhost:8000
+    token: example-token
