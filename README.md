@@ -15,34 +15,33 @@ npx -y @smithery/cli install @baruchiro/paperless-mcp --client claude
 ```
 
 ### Manual Installation
-1. Install the MCP server:
-```bash
-npm install -g paperless-mcp
-```
 
-2. Add it to your Claude's MCP configuration:
+Add these to your MCP config file:
 
-For VSCode extension, edit `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`:
+// STDIO mode (recommended for local or CLI use)
 ```json
-{
-  "mcpServers": {
-    "paperless": {
-      "command": "npx",
-      "args": ["paperless-mcp", "http://your-paperless-instance:8000", "your-api-token"]
-    }
-  }
+"paperless": {
+  "command": "npx",
+  "args": [
+    "@baruchiro/paperless-mcp",
+    "http://your-paperless-instance:8000",
+    "your-api-token"
+  ]
 }
 ```
 
-For Claude desktop app, edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+// HTTP mode (recommended for Docker or remote use)
 ```json
-{
-  "mcpServers": {
-    "paperless": {
-      "command": "npx",
-      "args": ["paperless-mcp", "http://your-paperless-instance:8000", "your-api-token"]
-    }
-  }
+"paperless": {
+  "command": "docker",
+  "args": [
+    "run",
+    "-i",
+    "--rm",
+    "ghcr.io/baruchiro/paperless-mcp",
+    "http://your-paperless-instance:8000",
+    "your-api-token"
+  ]
 }
 ```
 
@@ -58,7 +57,7 @@ For Claude desktop app, edit `~/Library/Application Support/Claude/claude_deskto
 
 That's it! Now you can ask Claude to help you manage your Paperless-NGX documents.
 
-## Example Usage
+### Example Usage
 
 Here are some things you can ask Claude to do:
 
