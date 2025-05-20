@@ -24,14 +24,16 @@ const {
 });
 
 const resolvedBaseUrl = baseUrl || process.env.PAPERLESS_URL;
-const resolvedToken = token || process.env.API_KEY;
+const resolvedToken = token || process.env.PAPERLESS_API_KEY;
 const resolvedPort = port ? parseInt(port, 10) : 3000;
 
 if (!resolvedBaseUrl || !resolvedToken) {
   console.error(
     "Usage: paperless-mcp --baseUrl <url> --token <token> [--http] [--port <port>]"
   );
-  console.error("Or set PAPERLESS_URL and API_KEY environment variables.");
+  console.error(
+    "Or set PAPERLESS_URL and PAPERLESS_API_KEY environment variables."
+  );
   process.exit(1);
 }
 

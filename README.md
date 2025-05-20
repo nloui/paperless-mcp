@@ -28,7 +28,7 @@ Add these to your MCP config file:
   ],
   "env": {
     "PAPERLESS_URL": "http://your-paperless-instance:8000",
-    "API_KEY": "your-api-token"
+    "PAPERLESS_API_KEY": "your-api-token"
   }
 }
 ```
@@ -45,7 +45,7 @@ Add these to your MCP config file:
   ],
   "env": {
     "PAPERLESS_URL": "http://your-paperless-instance:8000",
-    "API_KEY": "your-api-token"
+    "PAPERLESS_API_KEY": "your-api-token"
   }
 }
 ```
