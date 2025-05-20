@@ -1,56 +1,43 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
+import { parseArgs } from "node:util";
 import { PaperlessAPI } from "./api/PaperlessAPI";
 import { registerCorrespondentTools } from "./tools/correspondents";
 import { registerDocumentTools } from "./tools/documents";
 import { registerDocumentTypeTools } from "./tools/documentTypes";
 import { registerTagTools } from "./tools/tags";
 
-// Simple CLI argument parsing
-const args = process.argv.slice(2);
-const useHttp = args.includes("--http");
-let port = 3000;
-const portIndex = args.indexOf("--port");
-if (portIndex !== -1 && args[portIndex + 1]) {
-  const parsed = parseInt(args[portIndex + 1], 10);
-  if (!isNaN(parsed)) port = parsed;
+const {
+  values: { baseUrl, token, http: useHttp, port },
+} = parseArgs({
+  options: {
+    baseUrl: { type: "string" },
+    token: { type: "string" },
+    http: { type: "boolean", default: false },
+    port: { type: "string" },
+  },
+  allowPositionals: true,
+});
+
+const resolvedBaseUrl = baseUrl || process.env.PAPERLESS_URL;
+const resolvedToken = token || process.env.API_KEY;
+const resolvedPort = port ? parseInt(port, 10) : 3000;
+
+if (!resolvedBaseUrl || !resolvedToken) {
+  console.error(
+    "Usage: paperless-mcp --baseUrl <url> --token <token> [--http] [--port <port>]"
+  );
+  console.error("Or set PAPERLESS_URL and API_KEY environment variables.");
+  process.exit(1);
 }
 
 async function main() {
-  let baseUrl: string | undefined;
-  let token: string | undefined;
-
-  if (useHttp) {
-    baseUrl = process.env.PAPERLESS_URL;
-    token = process.env.API_KEY;
-    if (!baseUrl || !token) {
-      console.error(
-        "When using --http, PAPERLESS_URL and API_KEY environment variables must be set."
-      );
-      process.exit(1);
-    }
-  } else {
-    baseUrl = args[0];
-    token = args[1];
-    if (!baseUrl || !token) {
-      console.error(
-        "Usage: paperless-mcp <baseUrl> <token> [--http] [--port <port>]"
-      );
-      console.error(
-        "Example: paperless-mcp http://localhost:8000 your-api-token --http --port 3000"
-      );
-      console.error(
-        "When using --http, PAPERLESS_URL and API_KEY environment variables must be set."
-      );
-      process.exit(1);
-    }
-  }
-
   // Initialize API client and server once
-  const api = new PaperlessAPI(baseUrl, token);
+  const api = new PaperlessAPI(resolvedBaseUrl!, resolvedToken!);
   const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
   registerDocumentTools(server, api);
   registerTagTools(server, api);
@@ -150,9 +137,9 @@ async function main() {
       }
     });
 
-    app.listen(port, () => {
+    app.listen(resolvedPort, () => {
       console.log(
-        `MCP Stateless Streamable HTTP Server listening on port ${port}`
+        `MCP Stateless Streamable HTTP Server listening on port ${resolvedPort}`
       );
     });
   } else {

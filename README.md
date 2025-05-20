@@ -23,10 +23,13 @@ Add these to your MCP config file:
 "paperless": {
   "command": "npx",
   "args": [
-    "@baruchiro/paperless-mcp",
-    "http://your-paperless-instance:8000",
-    "your-api-token"
-  ]
+    "-y",
+    "@baruchiro/paperless-mcp@latest",
+  ],
+  "env": {
+    "PAPERLESS_URL": "http://your-paperless-instance:8000",
+    "API_KEY": "your-api-token"
+  }
 }
 ```
 
@@ -38,10 +41,12 @@ Add these to your MCP config file:
     "run",
     "-i",
     "--rm",
-    "ghcr.io/baruchiro/paperless-mcp",
-    "http://your-paperless-instance:8000",
-    "your-api-token"
-  ]
+    "ghcr.io/baruchiro/paperless-mcp:latest",
+  ],
+  "env": {
+    "PAPERLESS_URL": "http://your-paperless-instance:8000",
+    "API_KEY": "your-api-token"
+  }
 }
 ```
 
