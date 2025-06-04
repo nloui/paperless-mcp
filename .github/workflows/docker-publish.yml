@@ -29,12 +29,16 @@ jobs:
       - name: Set semver and latest tags if release
         id: tagmeta
         run: |
-          if [ "${{ github.event_name }}" = "workflow_call" ]; then
-            echo "SEMVER=type=semver,pattern=${{ inputs.versionTag }}" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "workflow_call" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "LATEST=type=raw,value=latest" >> $GITHUB_OUTPUT
           else
-            echo "SEMVER=" >> $GITHUB_OUTPUT
             echo "LATEST=" >> $GITHUB_OUTPUT
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+            echo "SEMVER=type=semver,pattern=${{ inputs.versionTag }}" >> $GITHUB_OUTPUT
+          else
+            echo "SEMVER=" >> $GITHUB_OUTPUT
           fi
       - name: Extract Docker metadata
         id: meta
@@ -42,7 +46,6 @@ jobs:
         with:
           images: ghcr.io/${{ github.actor }}/${{ github.repository }}
           tags: |
-            type=ref,event=branch
             type=ref,event=pr
             type=sha
             ${{ steps.tagmeta.outputs.SEMVER }}
