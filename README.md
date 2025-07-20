@@ -335,3 +335,27 @@ The server is built with:
 ## API Documentation
 
 This MCP server implements endpoints from the Paperless-NGX REST API. For more details about the underlying API, see the [official documentation](https://docs.paperless-ngx.com/api/).
+
+## Running the MCP Server
+
+The MCP server can be run in two modes:
+
+### 1. stdio (default)
+
+This is the default mode. The server communicates over stdio, suitable for CLI and direct integrations.
+
+```
+npm run start -- <baseUrl> <token>
+```
+
+### 2. HTTP (Streamable HTTP Transport)
+
+To run the server as an HTTP service, use the `--http` flag. You can also specify the port with `--port` (default: 3000). This mode requires [Express](https://expressjs.com/) to be installed (it is included as a dependency).
+
+```
+npm run start -- <baseUrl> <token> --http --port 3000
+```
+
+- The MCP API will be available at `POST /mcp` on the specified port.
+- Each request is handled statelessly, following the [StreamableHTTPServerTransport](https://github.com/modelcontextprotocol/typescript-sdk) pattern.
+- GET and DELETE requests to `/mcp` will return 405 Method Not Allowed.
