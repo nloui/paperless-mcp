@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=nloui&project=paperless-mcp&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/nloui-paperless-mcp-badge.png)](https://mseep.ai/app/nloui-paperless-mcp)
 
 # Paperless-NGX MCP Server
