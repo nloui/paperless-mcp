@@ -6,7 +6,12 @@ export function registerDocumentTypeTools(server, api) {
     "Retrieve all available document types for categorizing documents by purpose or format (Invoice, Receipt, Contract, etc.). Returns names and automatic matching rules.",
     {
     // No parameters - returns all available document types
-  }, async (args, extra) => {
+  },
+  {
+    title: "List Document Types",
+    readOnlyHint: true,
+  },
+  async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
     return api.getDocumentTypes();
   });
@@ -20,6 +25,10 @@ export function registerDocumentTypeTools(server, api) {
       matching_algorithm: z
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional().describe("How to match text patterns: 'any'=any word matches, 'all'=all words must match, 'exact'=exact phrase match, 'regular expression'=use regex patterns, 'fuzzy'=approximate matching with typos. Default is 'any'."),
+    },
+    {
+      title: "Create Document Type",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
@@ -47,6 +56,10 @@ export function registerDocumentTypeTools(server, api) {
         })
         .optional().describe("Permission settings when operation is 'set_permissions'. Defines who can view/assign and modify these document types."),
       merge: z.boolean().optional().describe("Whether to merge with existing permissions (true) or replace them entirely (false). Default is false."),
+    },
+    {
+      title: "Bulk Edit Document Types",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
