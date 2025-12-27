@@ -50,6 +50,10 @@ export function registerDocumentTools(server, api) {
       pages: z.string().optional().describe("Page specification for delete_pages method. Format: '1,3,5-7' to delete pages 1, 3, and 5 through 7."),
       degrees: z.number().optional().describe("Rotation angle in degrees when method is 'rotate'. Use 90, 180, or 270 for standard rotations."),
     },
+    {
+      title: "Bulk Edit Documents",
+      destructiveHint: true,
+    },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const { documents, method, ...parameters } = args;
@@ -72,6 +76,10 @@ export function registerDocumentTools(server, api) {
       archive_serial_number: z.string().optional().describe("Custom archive number for document organization and reference. Useful for maintaining external filing systems."),
       custom_fields: z.array(z.number()).optional().describe("Array of custom field IDs to associate with this document. Custom fields store additional metadata."),
     },
+    {
+      title: "Post Document",
+      destructiveHint: true,
+    },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const binaryData = Buffer.from(args.file, "base64");
@@ -89,6 +97,10 @@ export function registerDocumentTools(server, api) {
     {
       id: z.number().describe("Unique document ID. Get this from search_documents results. Returns full document metadata, content preview, and associated tags/correspondent/type."),
     },
+    {
+      title: "Get Document",
+      readOnlyHint: true,
+    },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.getDocument(args.id);
@@ -103,6 +115,10 @@ export function registerDocumentTools(server, api) {
       page: z.number().optional().describe("Page number for pagination (starts at 1). Use to browse through large result sets without hitting token limits."),
       page_size: z.number().optional().describe("Number of documents per page (default 25, max 100). Smaller page sizes help avoid token limits when many documents match."),
     },
+    {
+      title: "Search Documents",
+      readOnlyHint: true,
+    },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.searchDocuments(args.query, args.page, args.page_size);
@@ -115,6 +131,10 @@ export function registerDocumentTools(server, api) {
     {
       id: z.number().describe("Document ID to download. Get this from search_documents or get_document results."),
       original: z.boolean().optional().describe("Whether to download the original uploaded file (true) or the processed/archived version (false, default). Original files preserve exact formatting but may not include OCR improvements."),
+    },
+    {
+      title: "Download Document",
+      readOnlyHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");

@@ -6,7 +6,12 @@ export function registerTagTools(server, api) {
     "Retrieve all available tags for labeling and organizing documents. Returns tag names, colors, and matching rules for automatic assignment.",
     {
     // No parameters - returns all available tags
-  }, async (args, extra) => {
+  },
+  {
+    title: "List Tags",
+    readOnlyHint: true,
+  },
+  async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
     return api.getTags();
   });
@@ -22,6 +27,10 @@ export function registerTagTools(server, api) {
         .optional().describe("Hex color code for visual identification (e.g., '#FF0000' for red, '#00FF00' for green). If not provided, Paperless assigns a random color."),
       match: z.string().optional().describe("Text pattern to automatically assign this tag to matching documents. Use keywords, phrases, or regular expressions depending on matching_algorithm."),
       matching_algorithm: z.number().int().min(0).max(4).optional().describe("How to match text patterns: 0=any word, 1=all words, 2=exact phrase, 3=regular expression, 4=fuzzy matching. Default is 0 (any word)."),
+    },
+    {
+      title: "Create Tag",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
@@ -42,6 +51,10 @@ export function registerTagTools(server, api) {
       match: z.string().optional().describe("Text pattern for automatic tag assignment. Empty string removes auto-matching. Use keywords, phrases, or regex depending on matching_algorithm."),
       matching_algorithm: z.number().int().min(0).max(4).optional().describe("Algorithm for pattern matching: 0=any word, 1=all words, 2=exact phrase, 3=regular expression, 4=fuzzy matching."),
     },
+    {
+      title: "Update Tag",
+      destructiveHint: true,
+    },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       return api.updateTag(args.id, args);
@@ -53,6 +66,10 @@ export function registerTagTools(server, api) {
     "Permanently delete a tag from the system. This removes the tag from all documents that currently use it. Use with caution as this action cannot be undone.",
     {
       id: z.number().describe("ID of the tag to permanently delete. This will remove the tag from all documents that currently use it. Use list_tags to find tag IDs."),
+    },
+    {
+      title: "Delete Tag",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
@@ -80,6 +97,10 @@ export function registerTagTools(server, api) {
         })
         .optional().describe("Permission settings when operation is 'set_permissions'. Defines who can view/use and modify these tags."),
       merge: z.boolean().optional().describe("Whether to merge with existing permissions (true) or replace them entirely (false). Default is false."),
+    },
+    {
+      title: "Bulk Edit Tags",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");

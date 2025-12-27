@@ -5,7 +5,12 @@ export function registerCorrespondentTools(server: McpServer, api) {
   server.tool(
     "list_correspondents",
     "Retrieve all available correspondents (people, companies, organizations that send/receive documents). Returns names and automatic matching patterns for document assignment.",
-    { }, async (args, extra) => {
+    { },
+    {
+      title: "List Correspondents",
+      readOnlyHint: true,
+    },
+    async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
     return api.getCorrespondents();
   });
@@ -19,6 +24,10 @@ export function registerCorrespondentTools(server: McpServer, api) {
       matching_algorithm: z
         .enum(["any", "all", "exact", "regular expression", "fuzzy"])
         .optional().describe("How to match text patterns: 'any'=any word matches, 'all'=all words must match, 'exact'=exact phrase match, 'regular expression'=use regex patterns, 'fuzzy'=approximate matching with typos. Default is 'any'."),
+    },
+    {
+      title: "Create Correspondent",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
@@ -46,6 +55,10 @@ export function registerCorrespondentTools(server: McpServer, api) {
         })
         .optional().describe("Permission settings when operation is 'set_permissions'. Defines who can view/assign and modify these correspondents."),
       merge: z.boolean().optional().describe("Whether to merge with existing permissions (true) or replace them entirely (false). Default is false."),
+    },
+    {
+      title: "Bulk Edit Correspondents",
+      destructiveHint: true,
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
