@@ -129,4 +129,43 @@ export function registerDocumentTools(server, api) {
       };
     }
   );
+
+  server.tool(
+    "find_similar_documents",
+    "Find documents similar to a given document using content-based similarity matching. Useful for detecting duplicates, finding related documents, or discovering documents on similar topics. Returns documents ranked by similarity score.",
+    {
+      document_id: z.number().describe("ID of the reference document to find similar documents for. Get this from search_documents or get_document results."),
+      page: z.number().optional().describe("Page number for pagination (starts at 1). Use to browse through large result sets."),
+      page_size: z.number().optional().describe("Number of similar documents per page (default 25, max 100)."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.findSimilarDocuments(args.document_id, args.page, args.page_size);
+    }
+  );
+
+  server.tool(
+    "search_autocomplete",
+    "Get search term suggestions based on document content. Useful for building search queries and discovering terms that appear in the document corpus. Returns terms ranked by TF-IDF importance.",
+    {
+      term: z.string().optional().describe("Partial search term to get completions for. Leave empty to get most common/important terms in the corpus."),
+      limit: z.number().optional().describe("Maximum number of suggestions to return (default 10)."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.searchAutocomplete(args.term, args.limit);
+    }
+  );
+
+  server.tool(
+    "get_task_status",
+    "Check the status of an asynchronous task, such as document upload processing. Use this to poll for completion after uploading documents via post_document.",
+    {
+      task_id: z.string().describe("UUID of the task to check. This is returned by post_document and other asynchronous operations."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.getTaskStatus(args.task_id);
+    }
+  );
 }

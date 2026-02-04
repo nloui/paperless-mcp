@@ -142,6 +142,36 @@ export class PaperlessAPI {
     return response;
   }
 
+  async findSimilarDocuments(documentId, page?, pageSize?) {
+    const params = new URLSearchParams();
+    params.set("more_like_id", documentId.toString());
+    if (page) params.set("page", page.toString());
+    if (pageSize) params.set("page_size", pageSize.toString());
+
+    const response: any = await this.request(`/documents/?${params.toString()}`);
+
+    // Filter out content field to reduce token usage
+    if (response.results) {
+      response.results = response.results.map((doc: any) => {
+        const { content, download_url, thumbnail_url, ...rest } = doc;
+        return { ...rest, id: doc.id };
+      });
+    }
+
+    return response;
+  }
+
+  async searchAutocomplete(term, limit?) {
+    const params = new URLSearchParams();
+    if (term) params.set("term", term);
+    if (limit) params.set("limit", limit.toString());
+    return this.request(`/search/autocomplete/?${params.toString()}`);
+  }
+
+  async getTaskStatus(taskId) {
+    return this.request(`/tasks/?task_id=${taskId}`);
+  }
+
   // Tag operations
   async getTags() {
     return this.request("/tags/");
