@@ -27,6 +27,36 @@ export function registerCorrespondentTools(server: McpServer, api) {
   );
 
   server.tool(
+    "update_correspondent",
+    "Modify an existing correspondent's name or automatic matching rules. Useful for correcting names, improving automatic document assignment, or reorganizing correspondent categories.",
+    {
+      id: z.number().describe("ID of the correspondent to update. Use list_correspondents to find existing correspondent IDs."),
+      name: z.string().optional().describe("New name for the correspondent. Leave empty to keep current name."),
+      match: z.string().optional().describe("Text pattern for automatic assignment. Empty string removes auto-matching. Use names, email addresses, or keywords."),
+      matching_algorithm: z
+        .enum(["any", "all", "exact", "regular expression", "fuzzy"])
+        .optional().describe("Algorithm for pattern matching: 'any'=any word, 'all'=all words, 'exact'=exact phrase, 'regular expression'=regex, 'fuzzy'=approximate."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const { id, ...data } = args;
+      return api.updateCorrespondent(id, data);
+    }
+  );
+
+  server.tool(
+    "delete_correspondent",
+    "Permanently delete a correspondent from the system. Documents using this correspondent will have their correspondent field set to null. Use with caution as this action cannot be undone.",
+    {
+      id: z.number().describe("ID of the correspondent to permanently delete. Documents using this correspondent will lose their correspondent assignment. Use list_correspondents to find correspondent IDs."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.deleteCorrespondent(args.id);
+    }
+  );
+
+  server.tool(
     "bulk_edit_correspondents",
     "Perform bulk operations on multiple correspondents: set permissions to control who can assign them to documents, or permanently delete multiple correspondents. Use with caution as deletion affects all associated documents.",
     {

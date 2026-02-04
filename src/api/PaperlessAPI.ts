@@ -179,6 +179,19 @@ export class PaperlessAPI {
     });
   }
 
+  async updateCorrespondent(id, data) {
+    return this.request(`/correspondents/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCorrespondent(id) {
+    return this.request(`/correspondents/${id}/`, {
+      method: "DELETE",
+    });
+  }
+
   // Document type operations
   async getDocumentTypes() {
     return this.request("/document_types/");
@@ -188,6 +201,19 @@ export class PaperlessAPI {
     return this.request("/document_types/", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  }
+
+  async updateDocumentType(id, data) {
+    return this.request(`/document_types/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDocumentType(id) {
+    return this.request(`/document_types/${id}/`, {
+      method: "DELETE",
     });
   }
 

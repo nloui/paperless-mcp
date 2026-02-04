@@ -28,6 +28,36 @@ export function registerDocumentTypeTools(server, api) {
   );
 
   server.tool(
+    "update_document_type",
+    "Modify an existing document type's name or automatic matching rules. Useful for improving document classification accuracy or reorganizing document categories.",
+    {
+      id: z.number().describe("ID of the document type to update. Use list_document_types to find existing document type IDs."),
+      name: z.string().optional().describe("New name for the document type. Leave empty to keep current name."),
+      match: z.string().optional().describe("Text pattern for automatic classification. Empty string removes auto-matching. Use keywords typical for this document type."),
+      matching_algorithm: z
+        .enum(["any", "all", "exact", "regular expression", "fuzzy"])
+        .optional().describe("Algorithm for pattern matching: 'any'=any word, 'all'=all words, 'exact'=exact phrase, 'regular expression'=regex, 'fuzzy'=approximate."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const { id, ...data } = args;
+      return api.updateDocumentType(id, data);
+    }
+  );
+
+  server.tool(
+    "delete_document_type",
+    "Permanently delete a document type from the system. Documents using this type will have their document_type field set to null. Use with caution as this action cannot be undone.",
+    {
+      id: z.number().describe("ID of the document type to permanently delete. Documents using this type will lose their classification. Use list_document_types to find document type IDs."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      return api.deleteDocumentType(args.id);
+    }
+  );
+
+  server.tool(
     "bulk_edit_document_types",
     "Perform bulk operations on multiple document types: set permissions to control who can assign them to documents, or permanently delete multiple types. Use with caution as deletion affects all associated documents.",
     {
