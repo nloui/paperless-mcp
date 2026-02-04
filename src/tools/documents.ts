@@ -96,6 +96,30 @@ export function registerDocumentTools(server, api) {
   );
 
   server.tool(
+    "update_document",
+    "Update an existing document's metadata including title, correspondent, document type, tags, storage path, and custom fields. Use this to correct or enhance document organization after upload or OCR processing.",
+    {
+      id: z.number().describe("ID of the document to update. Get this from search_documents or get_document results."),
+      title: z.string().optional().describe("New document title. Leave empty to keep current title."),
+      correspondent: z.number().nullable().optional().describe("ID of correspondent to assign, or null to remove current correspondent. Use list_correspondents to find valid IDs."),
+      document_type: z.number().nullable().optional().describe("ID of document type to assign, or null to remove current type. Use list_document_types to find valid IDs."),
+      storage_path: z.number().nullable().optional().describe("ID of storage path to assign, or null to remove current path. Controls where the document is stored in folder hierarchy."),
+      tags: z.array(z.number()).optional().describe("Array of tag IDs to assign. This REPLACES all existing tags. Use list_tags to find valid IDs. To add/remove individual tags, use bulk_edit_documents instead."),
+      archive_serial_number: z.number().nullable().optional().describe("Archive serial number for document organization and reference. Set to null to remove."),
+      created: z.string().optional().describe("Document creation date in ISO format (YYYY-MM-DD). Use to correct dates extracted incorrectly by OCR."),
+      custom_fields: z.array(z.object({
+        field: z.number().describe("Custom field ID"),
+        value: z.union([z.string(), z.number(), z.boolean(), z.null()]).describe("Value for the custom field. Type depends on field definition.")
+      })).optional().describe("Array of custom field values to set. Each object needs 'field' (ID) and 'value'. Use list_custom_fields to see available fields."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const { id, ...data } = args;
+      return api.updateDocument(id, data);
+    }
+  );
+
+  server.tool(
     "search_documents",
     "Search through documents using full-text search across content, titles, tags, and metadata. Returns document metadata WITHOUT the full OCR content field to prevent token overflow. Use get_document to retrieve full details for specific documents of interest. Supports Paperless-NGX advanced query syntax.",
     {

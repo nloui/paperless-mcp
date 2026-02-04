@@ -106,6 +106,13 @@ export class PaperlessAPI {
     return this.request(`/documents/${id}/`);
   }
 
+  async updateDocument(id, data) {
+    return this.request(`/documents/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   async searchDocuments(query, page?, pageSize?) {
     const params = new URLSearchParams();
     params.set("query", query);
