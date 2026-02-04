@@ -191,6 +191,31 @@ export class PaperlessAPI {
     });
   }
 
+  // Custom field operations
+  async getCustomFields() {
+    return this.request("/custom_fields/");
+  }
+
+  async createCustomField(data) {
+    return this.request("/custom_fields/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCustomField(id, data) {
+    return this.request(`/custom_fields/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCustomField(id) {
+    return this.request(`/custom_fields/${id}/`, {
+      method: "DELETE",
+    });
+  }
+
   // Bulk object operations
   async bulkEditObjects(objects, objectType, operation, parameters = {}) {
     return this.request("/bulk_edit_objects/", {
