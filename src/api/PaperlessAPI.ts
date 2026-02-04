@@ -191,6 +191,31 @@ export class PaperlessAPI {
     });
   }
 
+  // Storage path operations
+  async getStoragePaths() {
+    return this.request("/storage_paths/");
+  }
+
+  async createStoragePath(data) {
+    return this.request("/storage_paths/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateStoragePath(id, data) {
+    return this.request(`/storage_paths/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteStoragePath(id) {
+    return this.request(`/storage_paths/${id}/`, {
+      method: "DELETE",
+    });
+  }
+
   // Bulk object operations
   async bulkEditObjects(objects, objectType, operation, parameters = {}) {
     return this.request("/bulk_edit_objects/", {

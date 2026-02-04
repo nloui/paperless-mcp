@@ -7,6 +7,7 @@ import { PaperlessAPI } from "./api/PaperlessAPI";
 import { registerCorrespondentTools } from "./tools/correspondents";
 import { registerDocumentTools } from "./tools/documents";
 import { registerDocumentTypeTools } from "./tools/documentTypes";
+import { registerStoragePathTools } from "./tools/storagePaths";
 import { registerTagTools } from "./tools/tags";
 
 // Simple CLI argument parsing
@@ -56,6 +57,7 @@ async function main() {
   registerTagTools(server, api);
   registerCorrespondentTools(server, api);
   registerDocumentTypeTools(server, api);
+  registerStoragePathTools(server, api);
 
   if (useHttp) {
     const app = express();
