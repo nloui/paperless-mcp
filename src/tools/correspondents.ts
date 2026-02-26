@@ -1,13 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
 
+function toContent(result: any) {
+  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+}
+
 export function registerCorrespondentTools(server: McpServer, api) {
   server.tool(
     "list_correspondents",
     "Retrieve all available correspondents (people, companies, organizations that send/receive documents). Returns names and automatic matching patterns for document assignment.",
     { }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getCorrespondents();
+    return toContent(await api.getCorrespondents());
   });
 
   server.tool(
@@ -22,7 +26,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createCorrespondent(args);
+      return toContent(await api.createCorrespondent(args));
     }
   );
 
@@ -49,7 +53,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.bulkEditObjects(
+      return toContent(await api.bulkEditObjects(
         args.correspondent_ids,
         "correspondents",
         args.operation,
@@ -60,7 +64,7 @@ export function registerCorrespondentTools(server: McpServer, api) {
               merge: args.merge,
             }
           : {}
-      );
+      ));
     }
   );
 }
