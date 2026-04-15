@@ -89,6 +89,43 @@ get_document({
 })
 ```
 
+#### update_document
+Update metadata on an existing document. Use this to correct the document date, title, correspondent, type, or tags after a document has been added to Paperless-NGX.
+
+> **Note on tags:** The `tags` parameter is a full replacement — it overwrites all existing tags on the document. To add or remove individual tags without affecting others, use `bulk_edit_documents` with `add_tag` or `remove_tag` instead.
+
+Parameters:
+- id: Document ID to update
+- title (optional): New title for the document
+- created (optional): Document date in ISO format (YYYY-MM-DD). Corrects the date to match the actual document date, not the scan/upload date.
+- correspondent (optional): ID of a correspondent, or null to clear
+- document_type (optional): ID of a document type, or null to clear
+- storage_path (optional): ID of a storage path, or null to use default
+- tags (optional): Full list of tag IDs to assign — replaces all existing tags
+- archive_serial_number (optional): Integer archive serial number, or null to clear
+
+```typescript
+// Fix a document date and assign a correspondent
+update_document({
+  id: 123,
+  created: "2024-11-18",
+  correspondent: 7
+})
+
+// Update title and document type
+update_document({
+  id: 456,
+  title: "Annual Pension Statement 2025",
+  document_type: 3
+})
+
+// Replace all tags
+update_document({
+  id: 789,
+  tags: [2, 5, 11]
+})
+```
+
 #### search_documents
 Full-text search across documents.
 

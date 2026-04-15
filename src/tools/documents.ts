@@ -106,11 +106,17 @@ export function registerDocumentTools(server, api) {
       document_type: z.number().nullable().optional().describe("ID of document type to assign, or null to clear. Use list_document_types to get valid IDs."),
       storage_path: z.number().nullable().optional().describe("ID of storage path to assign, or null to use default."),
       tags: z.array(z.number()).optional().describe("Full list of tag IDs to assign. Replaces all existing tags on the document. Use list_tags to get valid IDs."),
+      // Note: archive_serial_number is z.number() here (not z.string() as in post_document)
+      // because this tool sends JSON via PATCH, where the Paperless-NGX API expects an integer.
+      // post_document uses multipart form data, which requires everything to be stringified.
       archive_serial_number: z.number().nullable().optional().describe("Archive serial number for physical document cross-reference, or null to clear."),
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const { id, ...data } = args;
+      if (Object.keys(data).length === 0) {
+        throw new Error("At least one field must be provided to update.");
+      }
       return api.updateDocument(id, data);
     }
   );
