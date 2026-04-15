@@ -117,7 +117,12 @@ export function registerDocumentTools(server, api) {
       if (Object.keys(data).length === 0) {
         throw new Error("At least one field must be provided to update.");
       }
-      return api.updateDocument(id, data);
+      const result = await api.updateDocument(id, data);
+      // Strip the OCR content field before returning — Paperless document objects have
+      // a "content" key (OCR text string) that conflicts with MCP's content: ContentBlock[]
+      // response format, causing SDK validation errors. Return a string to avoid this.
+      const { content: _ocr, ...meta } = result;
+      return JSON.stringify(meta, null, 2);
     }
   );
 
