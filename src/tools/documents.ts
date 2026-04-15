@@ -91,7 +91,9 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.getDocument(args.id);
+      const result = await api.getDocument(args.id);
+      const { content: _ocr, ...meta } = result;
+      return { content: [{ type: "text" as const, text: JSON.stringify(meta, null, 2) }] };
     }
   );
 
@@ -105,7 +107,8 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.searchDocuments(args.query, args.page, args.page_size);
+      const result = await api.searchDocuments(args.query, args.page, args.page_size);
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
   );
 
