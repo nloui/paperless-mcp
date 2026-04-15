@@ -7,7 +7,8 @@ export function registerCorrespondentTools(server: McpServer, api) {
     "Retrieve all available correspondents (people, companies, organizations that send/receive documents). Returns names and automatic matching patterns for document assignment.",
     { }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getCorrespondents();
+    const result = await api.getCorrespondents();
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   });
 
   server.tool(

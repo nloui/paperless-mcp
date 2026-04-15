@@ -117,12 +117,17 @@ export function registerDocumentTools(server, api) {
       if (Object.keys(data).length === 0) {
         throw new Error("At least one field must be provided to update.");
       }
-      const result = await api.updateDocument(id, data);
-      // Strip the OCR content field before returning — Paperless document objects have
-      // a "content" key (OCR text string) that conflicts with MCP's content: ContentBlock[]
-      // response format, causing SDK validation errors. Return a string to avoid this.
-      const { content: _ocr, ...meta } = result;
-      return JSON.stringify(meta, null, 2);
+      try {
+        const result = await api.updateDocument(id, data);
+        // Explicitly return MCP content format. We can't return the raw Paperless document
+        // object because it has a "content" key (OCR text, a string) — the MCP client
+        // validates responses against CallToolResultSchema where content must be ContentBlock[].
+        // Stripping the OCR field and wrapping in the proper format satisfies both constraints.
+        const { content: _ocr, ...meta } = result;
+        return { content: [{ type: "text" as const, text: JSON.stringify(meta, null, 2) }] };
+      } catch (err: any) {
+        return { content: [{ type: "text" as const, text: `Error updating document ${id}: ${err?.message ?? String(err)}` }], isError: true };
+      }
     }
   );
 
