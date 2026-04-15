@@ -91,7 +91,42 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.getDocument(args.id);
+      const result = await api.getDocument(args.id);
+      const { content: _ocr, ...meta } = result;
+      return { content: [{ type: "text" as const, text: JSON.stringify(meta, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    "update_document",
+    "Update metadata for an existing document. Use this to correct or set the document date, title, correspondent, document type, tags, and other fields on a document that is already in Paperless-NGX.",
+    {
+      id: z.number().describe("Unique document ID to update. Get this from list_documents, search_documents, or get_document."),
+      title: z.string().optional().describe("New title for the document."),
+      created: z.string().optional().describe("Document date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss). Use this to set the date to the actual date on the document — Paperless often defaults to the upload/scan date instead."),
+      correspondent: z.number().nullable().optional().describe("ID of correspondent to assign, or null to clear. Use list_correspondents to get valid IDs."),
+      document_type: z.number().nullable().optional().describe("ID of document type to assign, or null to clear. Use list_document_types to get valid IDs."),
+      storage_path: z.number().nullable().optional().describe("ID of storage path to assign, or null to use default."),
+      tags: z.array(z.number()).optional().describe("Full list of tag IDs to assign. Replaces all existing tags on the document. Use list_tags to get valid IDs."),
+      archive_serial_number: z.string().nullable().optional().describe("Archive serial number for physical document cross-reference, or null to clear. Use the same format as post_document (e.g. '2024-001' or '42')."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const { id, ...data } = args;
+      if (Object.keys(data).length === 0) {
+        throw new Error("At least one field must be provided to update.");
+      }
+      try {
+        const result = await api.updateDocument(id, data);
+        // Explicitly return MCP content format. We can't return the raw Paperless document
+        // object because it has a "content" key (OCR text, a string) — the MCP client
+        // validates responses against CallToolResultSchema where content must be ContentBlock[].
+        // Stripping the OCR field and wrapping in the proper format satisfies both constraints.
+        const { content: _ocr, ...meta } = result;
+        return { content: [{ type: "text" as const, text: JSON.stringify(meta, null, 2) }] };
+      } catch (err: any) {
+        return { content: [{ type: "text" as const, text: `Error updating document ${id}: ${err?.message ?? String(err)}` }], isError: true };
+      }
     }
   );
 
@@ -105,7 +140,8 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.searchDocuments(args.query, args.page, args.page_size);
+      const result = await api.searchDocuments(args.query, args.page, args.page_size);
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
   );
 
