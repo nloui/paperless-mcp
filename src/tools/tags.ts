@@ -8,7 +8,8 @@ export function registerTagTools(server, api) {
     // No parameters - returns all available tags
   }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getTags();
+    const result = await api.getTags();
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   });
 
   server.tool(

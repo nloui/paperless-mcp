@@ -8,7 +8,8 @@ export function registerDocumentTypeTools(server, api) {
     // No parameters - returns all available document types
   }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getDocumentTypes();
+    const result = await api.getDocumentTypes();
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   });
 
   server.tool(
