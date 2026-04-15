@@ -96,6 +96,26 @@ export function registerDocumentTools(server, api) {
   );
 
   server.tool(
+    "update_document",
+    "Update metadata for an existing document. Use this to correct or set the document date, title, correspondent, document type, tags, and other fields on a document that is already in Paperless-NGX.",
+    {
+      id: z.number().describe("Unique document ID to update. Get this from list_documents, search_documents, or get_document."),
+      title: z.string().optional().describe("New title for the document."),
+      created: z.string().optional().describe("Document date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss). Use this to set the date to the actual date on the document — Paperless often defaults to the upload/scan date instead."),
+      correspondent: z.number().nullable().optional().describe("ID of correspondent to assign, or null to clear. Use list_correspondents to get valid IDs."),
+      document_type: z.number().nullable().optional().describe("ID of document type to assign, or null to clear. Use list_document_types to get valid IDs."),
+      storage_path: z.number().nullable().optional().describe("ID of storage path to assign, or null to use default."),
+      tags: z.array(z.number()).optional().describe("Full list of tag IDs to assign. Replaces all existing tags on the document. Use list_tags to get valid IDs."),
+      archive_serial_number: z.number().nullable().optional().describe("Archive serial number for physical document cross-reference, or null to clear."),
+    },
+    async (args, extra) => {
+      if (!api) throw new Error("Please configure API connection first");
+      const { id, ...data } = args;
+      return api.updateDocument(id, data);
+    }
+  );
+
+  server.tool(
     "search_documents",
     "Search through documents using full-text search across content, titles, tags, and metadata. Returns document metadata WITHOUT the full OCR content field to prevent token overflow. Use get_document to retrieve full details for specific documents of interest. Supports Paperless-NGX advanced query syntax.",
     {
