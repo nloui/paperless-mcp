@@ -7,7 +7,8 @@ export function registerCorrespondentTools(server: McpServer, api) {
     "Retrieve all available correspondents (people, companies, organizations that send/receive documents). Returns names and automatic matching patterns for document assignment.",
     { }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getCorrespondents();
+    const result = await api.getCorrespondents();
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   });
 
   server.tool(
@@ -22,7 +23,17 @@ export function registerCorrespondentTools(server: McpServer, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createCorrespondent(args);
+      const algorithmMap: Record<string, number> = {
+        any: 1, all: 2, exact: 3, "regular expression": 4, fuzzy: 5,
+      };
+      const payload = {
+        ...args,
+        ...(args.matching_algorithm !== undefined && {
+          matching_algorithm: algorithmMap[args.matching_algorithm],
+        }),
+      };
+      const result = await api.createCorrespondent(payload);
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
   );
 
