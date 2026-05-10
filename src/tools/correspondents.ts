@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
+import { wrap } from "./utils.js";
 
 export function registerCorrespondentTools(server: McpServer, api) {
-  const wrap = (d: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(d, null, 2) }] });
 
   server.tool(
     "list_correspondents",

@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { wrap } from "./utils.js";
 
 export function registerDocumentTypeTools(server, api) {
-  const wrap = (d: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(d, null, 2) }] });
 
   server.tool(
     "list_document_types",
