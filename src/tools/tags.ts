@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export function registerTagTools(server, api) {
+  const wrap = (d: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(d, null, 2) }] });
+
   server.tool(
     "list_tags",
     "Retrieve all available tags for labeling and organizing documents. Returns tag names, colors, and matching rules for automatic assignment.",
@@ -8,7 +10,7 @@ export function registerTagTools(server, api) {
     // No parameters - returns all available tags
   }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getTags();
+    return wrap(await api.getTags());
   });
 
   server.tool(
@@ -25,7 +27,7 @@ export function registerTagTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createTag(args);
+      return wrap(await api.createTag(args));
     }
   );
 
@@ -44,7 +46,7 @@ export function registerTagTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.updateTag(args.id, args);
+      return wrap(await api.updateTag(args.id, args));
     }
   );
 
@@ -56,7 +58,7 @@ export function registerTagTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.deleteTag(args.id);
+      return wrap(await api.deleteTag(args.id));
     }
   );
 
@@ -83,7 +85,7 @@ export function registerTagTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.bulkEditObjects(
+      return wrap(await api.bulkEditObjects(
         args.tag_ids,
         "tags",
         args.operation,
@@ -94,7 +96,7 @@ export function registerTagTools(server, api) {
               merge: args.merge,
             }
           : {}
-      );
+      ));
     }
   );
 }

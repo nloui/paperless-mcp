@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export function registerDocumentTypeTools(server, api) {
+  const wrap = (d: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(d, null, 2) }] });
+
   server.tool(
     "list_document_types",
     "Retrieve all available document types for categorizing documents by purpose or format (Invoice, Receipt, Contract, etc.). Returns names and automatic matching rules.",
@@ -8,7 +10,7 @@ export function registerDocumentTypeTools(server, api) {
     // No parameters - returns all available document types
   }, async (args, extra) => {
     if (!api) throw new Error("Please configure API connection first");
-    return api.getDocumentTypes();
+    return wrap(await api.getDocumentTypes());
   });
 
   server.tool(
@@ -23,7 +25,7 @@ export function registerDocumentTypeTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.createDocumentType(args);
+      return wrap(await api.createDocumentType(args));
     }
   );
 
@@ -50,7 +52,7 @@ export function registerDocumentTypeTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.bulkEditObjects(
+      return wrap(await api.bulkEditObjects(
         args.document_type_ids,
         "document_types",
         args.operation,
@@ -61,7 +63,7 @@ export function registerDocumentTypeTools(server, api) {
               merge: args.merge,
             }
           : {}
-      );
+      ));
     }
   );
 }

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export function registerDocumentTools(server, api) {
+  const wrap = (d: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(d, null, 2) }] });
+
   server.tool(
     "bulk_edit_documents",
     "Perform bulk operations on multiple documents simultaneously: set correspondent/type/tags, delete, reprocess, merge, split, rotate, or manage permissions. Efficient for managing large document collections.",
@@ -53,7 +55,7 @@ export function registerDocumentTools(server, api) {
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const { documents, method, ...parameters } = args;
-      return api.bulkEditDocuments(documents, method, parameters);
+      return wrap(await api.bulkEditDocuments(documents, method, parameters));
     }
   );
 
@@ -78,7 +80,7 @@ export function registerDocumentTools(server, api) {
       const blob = new Blob([binaryData]);
       const file = new File([blob], args.filename);
       const { file: _, filename: __, ...metadata } = args;
-      return api.postDocument(file, metadata);
+      return wrap(await api.postDocument(file, metadata));
     }
   );
 
@@ -91,7 +93,7 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.getDocument(args.id);
+      return wrap(await api.getDocument(args.id));
     }
   );
 
@@ -105,7 +107,7 @@ export function registerDocumentTools(server, api) {
     },
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
-      return api.searchDocuments(args.query, args.page, args.page_size);
+      return wrap(await api.searchDocuments(args.query, args.page, args.page_size));
     }
   );
 
@@ -119,14 +121,13 @@ export function registerDocumentTools(server, api) {
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const response = await api.downloadDocument(args.id, args.original);
-      return {
-        blob: Buffer.from(await response.arrayBuffer()).toString("base64"),
+      return wrap({blob: Buffer.from(await response.arrayBuffer()).toString("base64"),
         filename:
           response.headers
             .get("content-disposition")
             ?.split("filename=")[1]
             ?.replace(/"/g, "") || `document-${args.id}`,
-      };
+      });
     }
   );
 }
