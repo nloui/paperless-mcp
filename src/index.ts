@@ -52,6 +52,42 @@ async function main() {
   // Initialize API client and server once
   const api = new PaperlessAPI(baseUrl, token);
   const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
+
+  // --- Compat-Shim (auer.uno): MCP-konformes Tool-Result erzwingen ---
+  // Die Tool-Handler geben rohe Paperless-API-Objekte zurueck (z.B. {count, results}).
+  // Der MCP-Standard / Claude-Code-Client erwartet { content: [{type:"text", text}] };
+  // fehlt content[], rendert der Client "no output" (=> Paperless wirkte komplett leer).
+  // Wir normalisieren daher zentral jeden registrierten Tool-Handler.
+  const _origTool = (server.tool as any).bind(server);
+  (server as any).tool = (...toolArgs: any[]) => {
+    const lastIdx = toolArgs.length - 1;
+    if (typeof toolArgs[lastIdx] === "function") {
+      const origHandler = toolArgs[lastIdx];
+      toolArgs[lastIdx] = async (...hArgs: any[]) => {
+        const result = await origHandler(...hArgs);
+        if (
+          result &&
+          typeof result === "object" &&
+          Array.isArray((result as any).content)
+        ) {
+          return result; // bereits MCP-konform
+        }
+        let text: string;
+        try {
+          text =
+            typeof result === "string"
+              ? result
+              : JSON.stringify(result, null, 2);
+        } catch {
+          text = String(result);
+        }
+        return { content: [{ type: "text", text }] };
+      };
+    }
+    return _origTool(...toolArgs);
+  };
+  // --- Ende Compat-Shim ---
+
   registerDocumentTools(server, api);
   registerTagTools(server, api);
   registerCorrespondentTools(server, api);
