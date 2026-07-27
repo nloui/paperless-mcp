@@ -338,12 +338,14 @@ npm run start -- <baseUrl> <token>
 
 ### 2. HTTP (Streamable HTTP Transport)
 
-To run the server as an HTTP service, use the `--http` flag. You can also specify the port with `--port` (default: 3000). This mode requires [Express](https://expressjs.com/) to be installed (it is included as a dependency).
+To run the server as an HTTP service, use the `--http` flag. You can also specify the port with `--port` (default: 3000). In this mode, `PAPERLESS_URL` and `API_KEY` must be set as environment variables instead of CLI arguments. This mode requires [Express](https://expressjs.com/) to be installed (it is included as a dependency).
 
 ```
-npm run start -- <baseUrl> <token> --http --port 3000
+PAPERLESS_URL=http://your-paperless-instance:8000 API_KEY=your-api-token npm run start -- --http --port 3000
 ```
 
-- The MCP API will be available at `POST /mcp` on the specified port.
-- Each request is handled statelessly, following the [StreamableHTTPServerTransport](https://github.com/modelcontextprotocol/typescript-sdk) pattern.
-- GET and DELETE requests to `/mcp` will return 405 Method Not Allowed.
+- The MCP API is available at `/mcp` on the specified port, using stateful sessions:
+  - `POST /mcp` with no `Mcp-Session-Id` header and an `initialize` request starts a new session and returns an `Mcp-Session-Id` header. Every subsequent request for that session must send this header back.
+  - `GET /mcp` resumes the session's standalone SSE stream (for server-initiated notifications).
+  - `DELETE /mcp` explicitly terminates the session and frees its resources.
+- Sessions are held in memory, so this mode assumes a single-instance deployment (no built-in support for scaling across multiple processes/replicas).
