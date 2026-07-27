@@ -28,10 +28,10 @@
     "url": "git+https://github.com/nloui/paperless-mcp.git"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.1",
+    "@modelcontextprotocol/sdk": "1.29.0",
     "express": "^5.1.0",
-    "typescript": "^5.8.3",
-    "zod": "^3.24.1"
+    "typescript": "^5.9.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
