@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import express from "express";
 import { PaperlessAPI } from "./api/PaperlessAPI";
 import { registerCorrespondentTools } from "./tools/correspondents";
@@ -49,13 +51,19 @@ async function main() {
     }
   }
 
-  // Initialize API client and server once
+  // Initialize API client once; each session gets its own McpServer instance
+  // since the SDK's Protocol.connect() rejects a second transport on a server
+  // that's already connected to one.
   const api = new PaperlessAPI(baseUrl, token);
-  const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
-  registerDocumentTools(server, api);
-  registerTagTools(server, api);
-  registerCorrespondentTools(server, api);
-  registerDocumentTypeTools(server, api);
+
+  function createServer(): McpServer {
+    const server = new McpServer({ name: "paperless-ngx", version: "1.0.0" });
+    registerDocumentTools(server, api);
+    registerTagTools(server, api);
+    registerCorrespondentTools(server, api);
+    registerDocumentTypeTools(server, api);
+    return server;
+  }
 
   if (useHttp) {
     const app = express();
@@ -63,16 +71,41 @@ async function main() {
 
     // Store transports for each session
     const sseTransports: Record<string, SSEServerTransport> = {};
+    const mcpTransports: Record<string, StreamableHTTPServerTransport> = {};
 
     app.post("/mcp", async (req, res) => {
       try {
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: undefined,
-        });
-        res.on("close", () => {
-          transport.close();
-        });
-        await server.connect(transport);
+        const sessionId = req.headers["mcp-session-id"] as string | undefined;
+        let transport: StreamableHTTPServerTransport;
+
+        if (sessionId && mcpTransports[sessionId]) {
+          transport = mcpTransports[sessionId];
+        } else if (!sessionId && isInitializeRequest(req.body)) {
+          transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => randomUUID(),
+            onsessioninitialized: (newSessionId) => {
+              mcpTransports[newSessionId] = transport;
+            },
+          });
+          transport.onclose = () => {
+            if (transport.sessionId) {
+              delete mcpTransports[transport.sessionId];
+            }
+          };
+          const server = createServer();
+          await server.connect(transport);
+        } else {
+          res.status(400).json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32000,
+              message: "Bad Request: No valid session ID provided",
+            },
+            id: null,
+          });
+          return;
+        }
+
         await transport.handleRequest(req, res, req.body);
       } catch (error) {
         console.error("Error handling MCP request:", error);
@@ -89,31 +122,21 @@ async function main() {
       }
     });
 
-    app.get("/mcp", async (req, res) => {
-      res.writeHead(405).end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message: "Method not allowed.",
-          },
-          id: null,
-        })
-      );
-    });
+    const handleSessionRequest = async (
+      req: express.Request,
+      res: express.Response
+    ) => {
+      const sessionId = req.headers["mcp-session-id"] as string | undefined;
+      if (!sessionId || !mcpTransports[sessionId]) {
+        res.status(400).send("Invalid or missing session ID");
+        return;
+      }
+      const transport = mcpTransports[sessionId];
+      await transport.handleRequest(req, res);
+    };
 
-    app.delete("/mcp", async (req, res) => {
-      res.writeHead(405).end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message: "Method not allowed.",
-          },
-          id: null,
-        })
-      );
-    });
+    app.get("/mcp", handleSessionRequest);
+    app.delete("/mcp", handleSessionRequest);
 
     app.get("/sse", async (req, res) => {
       console.log("SSE request received");
@@ -124,6 +147,7 @@ async function main() {
           delete sseTransports[transport.sessionId];
           transport.close();
         });
+        const server = createServer();
         await server.connect(transport);
       } catch (error) {
         console.error("Error handling SSE request:", error);
@@ -152,10 +176,11 @@ async function main() {
 
     app.listen(port, () => {
       console.log(
-        `MCP Stateless Streamable HTTP Server listening on port ${port}`
+        `MCP Stateful Streamable HTTP Server listening on port ${port}`
       );
     });
   } else {
+    const server = createServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
   }
