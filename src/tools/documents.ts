@@ -1,5 +1,35 @@
 import { z } from "zod";
 
+const MIME_MAP: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".tiff": "image/tiff",
+  ".tif": "image/tiff",
+  ".webp": "image/webp",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".csv": "text/csv",
+  ".html": "text/html",
+  ".htm": "text/html",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".odt": "application/vnd.oasis.opendocument.text",
+  ".ods": "application/vnd.oasis.opendocument.spreadsheet",
+  ".odp": "application/vnd.oasis.opendocument.presentation",
+};
+
+function getMimeType(filename: string): string {
+  const ext = "." + filename.split(".").pop()?.toLowerCase();
+  return MIME_MAP[ext] || "application/octet-stream";
+}
+
 export function registerDocumentTools(server, api) {
   server.tool(
     "bulk_edit_documents",
@@ -63,6 +93,7 @@ export function registerDocumentTools(server, api) {
     {
       file: z.string().describe("Base64 encoded file content. Convert your file to base64 before uploading. Supports PDF, images (PNG, JPG, TIFF), and text files."),
       filename: z.string().describe("Original filename with extension (e.g., 'invoice.pdf', 'receipt.png'). This helps Paperless determine file type and initial document title."),
+      mime_type: z.string().optional().describe("MIME type of the file (e.g., 'application/pdf', 'image/png'). If not provided, it will be inferred from the filename extension."),
       title: z.string().optional().describe("Custom document title. If not provided, Paperless will extract title from filename or document content."),
       created: z.string().optional().describe("Document creation date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss). If not provided, uses current date."),
       correspondent: z.number().optional().describe("ID of the correspondent (sender/receiver) for this document. Use list_correspondents to find or create_correspondent to add new ones."),
@@ -75,9 +106,10 @@ export function registerDocumentTools(server, api) {
     async (args, extra) => {
       if (!api) throw new Error("Please configure API connection first");
       const binaryData = Buffer.from(args.file, "base64");
-      const blob = new Blob([binaryData]);
-      const file = new File([blob], args.filename);
-      const { file: _, filename: __, ...metadata } = args;
+      const mimeType = args.mime_type || getMimeType(args.filename);
+      const blob = new Blob([binaryData], { type: mimeType });
+      const file = new File([blob], args.filename, { type: mimeType });
+      const { file: _, filename: __, mime_type: ___, ...metadata } = args;
       return api.postDocument(file, metadata);
     }
   );
